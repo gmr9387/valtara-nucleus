@@ -9,38 +9,233 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppWorkflowsRouteImport } from './routes/_app.workflows'
+import { Route as AppUsersRouteImport } from './routes/_app.users'
+import { Route as AppTelemetryRouteImport } from './routes/_app.telemetry'
+import { Route as AppSecretsRouteImport } from './routes/_app.secrets'
+import { Route as AppProjectsRouteImport } from './routes/_app.projects'
+import { Route as AppOrganizationsRouteImport } from './routes/_app.organizations'
+import { Route as AppGovernanceRouteImport } from './routes/_app.governance'
+import { Route as AppEvidenceRouteImport } from './routes/_app.evidence'
+import { Route as AppEnvironmentsRouteImport } from './routes/_app.environments'
+import { Route as AppDecisionsRouteImport } from './routes/_app.decisions'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppConnectorsRouteImport } from './routes/_app.connectors'
+import { Route as AppAuditRouteImport } from './routes/_app.audit'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppWorkflowsRoute = AppWorkflowsRouteImport.update({
+  id: '/workflows',
+  path: '/workflows',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppUsersRoute = AppUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTelemetryRoute = AppTelemetryRouteImport.update({
+  id: '/telemetry',
+  path: '/telemetry',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSecretsRoute = AppSecretsRouteImport.update({
+  id: '/secrets',
+  path: '/secrets',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProjectsRoute = AppProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOrganizationsRoute = AppOrganizationsRouteImport.update({
+  id: '/organizations',
+  path: '/organizations',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGovernanceRoute = AppGovernanceRouteImport.update({
+  id: '/governance',
+  path: '/governance',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEvidenceRoute = AppEvidenceRouteImport.update({
+  id: '/evidence',
+  path: '/evidence',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEnvironmentsRoute = AppEnvironmentsRouteImport.update({
+  id: '/environments',
+  path: '/environments',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDecisionsRoute = AppDecisionsRouteImport.update({
+  id: '/decisions',
+  path: '/decisions',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConnectorsRoute = AppConnectorsRouteImport.update({
+  id: '/connectors',
+  path: '/connectors',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAuditRoute = AppAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/audit': typeof AppAuditRoute
+  '/connectors': typeof AppConnectorsRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/decisions': typeof AppDecisionsRoute
+  '/environments': typeof AppEnvironmentsRoute
+  '/evidence': typeof AppEvidenceRoute
+  '/governance': typeof AppGovernanceRoute
+  '/organizations': typeof AppOrganizationsRoute
+  '/projects': typeof AppProjectsRoute
+  '/secrets': typeof AppSecretsRoute
+  '/telemetry': typeof AppTelemetryRoute
+  '/users': typeof AppUsersRoute
+  '/workflows': typeof AppWorkflowsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/audit': typeof AppAuditRoute
+  '/connectors': typeof AppConnectorsRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/decisions': typeof AppDecisionsRoute
+  '/environments': typeof AppEnvironmentsRoute
+  '/evidence': typeof AppEvidenceRoute
+  '/governance': typeof AppGovernanceRoute
+  '/organizations': typeof AppOrganizationsRoute
+  '/projects': typeof AppProjectsRoute
+  '/secrets': typeof AppSecretsRoute
+  '/telemetry': typeof AppTelemetryRoute
+  '/users': typeof AppUsersRoute
+  '/workflows': typeof AppWorkflowsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_app/audit': typeof AppAuditRoute
+  '/_app/connectors': typeof AppConnectorsRoute
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/decisions': typeof AppDecisionsRoute
+  '/_app/environments': typeof AppEnvironmentsRoute
+  '/_app/evidence': typeof AppEvidenceRoute
+  '/_app/governance': typeof AppGovernanceRoute
+  '/_app/organizations': typeof AppOrganizationsRoute
+  '/_app/projects': typeof AppProjectsRoute
+  '/_app/secrets': typeof AppSecretsRoute
+  '/_app/telemetry': typeof AppTelemetryRoute
+  '/_app/users': typeof AppUsersRoute
+  '/_app/workflows': typeof AppWorkflowsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/audit'
+    | '/connectors'
+    | '/dashboard'
+    | '/decisions'
+    | '/environments'
+    | '/evidence'
+    | '/governance'
+    | '/organizations'
+    | '/projects'
+    | '/secrets'
+    | '/telemetry'
+    | '/users'
+    | '/workflows'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/audit'
+    | '/connectors'
+    | '/dashboard'
+    | '/decisions'
+    | '/environments'
+    | '/evidence'
+    | '/governance'
+    | '/organizations'
+    | '/projects'
+    | '/secrets'
+    | '/telemetry'
+    | '/users'
+    | '/workflows'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/audit'
+    | '/_app/connectors'
+    | '/_app/dashboard'
+    | '/_app/decisions'
+    | '/_app/environments'
+    | '/_app/evidence'
+    | '/_app/governance'
+    | '/_app/organizations'
+    | '/_app/projects'
+    | '/_app/secrets'
+    | '/_app/telemetry'
+    | '/_app/users'
+    | '/_app/workflows'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +243,138 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/workflows': {
+      id: '/_app/workflows'
+      path: '/workflows'
+      fullPath: '/workflows'
+      preLoaderRoute: typeof AppWorkflowsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/users': {
+      id: '/_app/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AppUsersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/telemetry': {
+      id: '/_app/telemetry'
+      path: '/telemetry'
+      fullPath: '/telemetry'
+      preLoaderRoute: typeof AppTelemetryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/secrets': {
+      id: '/_app/secrets'
+      path: '/secrets'
+      fullPath: '/secrets'
+      preLoaderRoute: typeof AppSecretsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/projects': {
+      id: '/_app/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof AppProjectsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/organizations': {
+      id: '/_app/organizations'
+      path: '/organizations'
+      fullPath: '/organizations'
+      preLoaderRoute: typeof AppOrganizationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/governance': {
+      id: '/_app/governance'
+      path: '/governance'
+      fullPath: '/governance'
+      preLoaderRoute: typeof AppGovernanceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/evidence': {
+      id: '/_app/evidence'
+      path: '/evidence'
+      fullPath: '/evidence'
+      preLoaderRoute: typeof AppEvidenceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/environments': {
+      id: '/_app/environments'
+      path: '/environments'
+      fullPath: '/environments'
+      preLoaderRoute: typeof AppEnvironmentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/decisions': {
+      id: '/_app/decisions'
+      path: '/decisions'
+      fullPath: '/decisions'
+      preLoaderRoute: typeof AppDecisionsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/connectors': {
+      id: '/_app/connectors'
+      path: '/connectors'
+      fullPath: '/connectors'
+      preLoaderRoute: typeof AppConnectorsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/audit': {
+      id: '/_app/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AppAuditRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppAuditRoute: typeof AppAuditRoute
+  AppConnectorsRoute: typeof AppConnectorsRoute
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppDecisionsRoute: typeof AppDecisionsRoute
+  AppEnvironmentsRoute: typeof AppEnvironmentsRoute
+  AppEvidenceRoute: typeof AppEvidenceRoute
+  AppGovernanceRoute: typeof AppGovernanceRoute
+  AppOrganizationsRoute: typeof AppOrganizationsRoute
+  AppProjectsRoute: typeof AppProjectsRoute
+  AppSecretsRoute: typeof AppSecretsRoute
+  AppTelemetryRoute: typeof AppTelemetryRoute
+  AppUsersRoute: typeof AppUsersRoute
+  AppWorkflowsRoute: typeof AppWorkflowsRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAuditRoute: AppAuditRoute,
+  AppConnectorsRoute: AppConnectorsRoute,
+  AppDashboardRoute: AppDashboardRoute,
+  AppDecisionsRoute: AppDecisionsRoute,
+  AppEnvironmentsRoute: AppEnvironmentsRoute,
+  AppEvidenceRoute: AppEvidenceRoute,
+  AppGovernanceRoute: AppGovernanceRoute,
+  AppOrganizationsRoute: AppOrganizationsRoute,
+  AppProjectsRoute: AppProjectsRoute,
+  AppSecretsRoute: AppSecretsRoute,
+  AppTelemetryRoute: AppTelemetryRoute,
+  AppUsersRoute: AppUsersRoute,
+  AppWorkflowsRoute: AppWorkflowsRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
