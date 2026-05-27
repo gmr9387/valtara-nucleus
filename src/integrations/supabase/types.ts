@@ -67,6 +67,368 @@ export type Database = {
           },
         ]
       }
+      connector_bindings: {
+        Row: {
+          connector_id: string
+          created_at: string
+          created_by: string
+          credential_id: string | null
+          environment_id: string | null
+          id: string
+          organization_id: string
+          project_id: string | null
+          status: Database["public"]["Enums"]["binding_status"]
+          updated_at: string
+        }
+        Insert: {
+          connector_id: string
+          created_at?: string
+          created_by: string
+          credential_id?: string | null
+          environment_id?: string | null
+          id?: string
+          organization_id: string
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["binding_status"]
+          updated_at?: string
+        }
+        Update: {
+          connector_id?: string
+          created_at?: string
+          created_by?: string
+          credential_id?: string | null
+          environment_id?: string | null
+          id?: string
+          organization_id?: string
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["binding_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connector_bindings_connector_id_fkey"
+            columns: ["connector_id"]
+            isOneToOne: false
+            referencedRelation: "connectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "connector_bindings_credential_id_fkey"
+            columns: ["credential_id"]
+            isOneToOne: false
+            referencedRelation: "credentials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      connector_capabilities: {
+        Row: {
+          capability_key: string
+          capability_label: string
+          connector_id: string
+          id: string
+        }
+        Insert: {
+          capability_key: string
+          capability_label: string
+          connector_id: string
+          id?: string
+        }
+        Update: {
+          capability_key?: string
+          capability_label?: string
+          connector_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connector_capabilities_connector_id_fkey"
+            columns: ["connector_id"]
+            isOneToOne: false
+            referencedRelation: "connectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      connector_health_checks: {
+        Row: {
+          checked_at: string
+          connector_binding_id: string
+          health_status: Database["public"]["Enums"]["health_status"]
+          id: string
+          latency_ms: number | null
+          message: string | null
+        }
+        Insert: {
+          checked_at?: string
+          connector_binding_id: string
+          health_status?: Database["public"]["Enums"]["health_status"]
+          id?: string
+          latency_ms?: number | null
+          message?: string | null
+        }
+        Update: {
+          checked_at?: string
+          connector_binding_id?: string
+          health_status?: Database["public"]["Enums"]["health_status"]
+          id?: string
+          latency_ms?: number | null
+          message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connector_health_checks_connector_binding_id_fkey"
+            columns: ["connector_binding_id"]
+            isOneToOne: false
+            referencedRelation: "connector_bindings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      connector_versions: {
+        Row: {
+          changelog: string | null
+          connector_id: string
+          created_at: string
+          id: string
+          schema_version: number
+          version: string
+        }
+        Insert: {
+          changelog?: string | null
+          connector_id: string
+          created_at?: string
+          id?: string
+          schema_version?: number
+          version: string
+        }
+        Update: {
+          changelog?: string | null
+          connector_id?: string
+          created_at?: string
+          id?: string
+          schema_version?: number
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connector_versions_connector_id_fkey"
+            columns: ["connector_id"]
+            isOneToOne: false
+            referencedRelation: "connectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      connectors: {
+        Row: {
+          category: Database["public"]["Enums"]["connector_category"]
+          created_at: string
+          documentation_url: string | null
+          id: string
+          key: string
+          label: string
+          status: Database["public"]["Enums"]["connector_status"]
+          supports_oauth: boolean
+          supports_webhooks: boolean
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["connector_category"]
+          created_at?: string
+          documentation_url?: string | null
+          id?: string
+          key: string
+          label: string
+          status?: Database["public"]["Enums"]["connector_status"]
+          supports_oauth?: boolean
+          supports_webhooks?: boolean
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["connector_category"]
+          created_at?: string
+          documentation_url?: string | null
+          id?: string
+          key?: string
+          label?: string
+          status?: Database["public"]["Enums"]["connector_status"]
+          supports_oauth?: boolean
+          supports_webhooks?: boolean
+        }
+        Relationships: []
+      }
+      credential_providers: {
+        Row: {
+          category: Database["public"]["Enums"]["connector_category"]
+          created_at: string
+          id: string
+          key: string
+          label: string
+          supports_oauth: boolean
+          supports_rotation: boolean
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["connector_category"]
+          created_at?: string
+          id?: string
+          key: string
+          label: string
+          supports_oauth?: boolean
+          supports_rotation?: boolean
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["connector_category"]
+          created_at?: string
+          id?: string
+          key?: string
+          label?: string
+          supports_oauth?: boolean
+          supports_rotation?: boolean
+        }
+        Relationships: []
+      }
+      credential_rotation_events: {
+        Row: {
+          created_at: string
+          credential_id: string
+          id: string
+          next_version_id: string | null
+          previous_version_id: string | null
+          rotation_reason: Database["public"]["Enums"]["rotation_reason"]
+          triggered_by: string
+        }
+        Insert: {
+          created_at?: string
+          credential_id: string
+          id?: string
+          next_version_id?: string | null
+          previous_version_id?: string | null
+          rotation_reason?: Database["public"]["Enums"]["rotation_reason"]
+          triggered_by: string
+        }
+        Update: {
+          created_at?: string
+          credential_id?: string
+          id?: string
+          next_version_id?: string | null
+          previous_version_id?: string | null
+          rotation_reason?: Database["public"]["Enums"]["rotation_reason"]
+          triggered_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credential_rotation_events_credential_id_fkey"
+            columns: ["credential_id"]
+            isOneToOne: false
+            referencedRelation: "credentials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credential_rotation_events_next_version_id_fkey"
+            columns: ["next_version_id"]
+            isOneToOne: false
+            referencedRelation: "credential_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credential_rotation_events_previous_version_id_fkey"
+            columns: ["previous_version_id"]
+            isOneToOne: false
+            referencedRelation: "credential_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credential_versions: {
+        Row: {
+          created_at: string
+          created_by: string
+          credential_id: string
+          encrypted_payload_ref: string
+          id: string
+          is_active: boolean
+          redacted_preview: string | null
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          credential_id: string
+          encrypted_payload_ref: string
+          id?: string
+          is_active?: boolean
+          redacted_preview?: string | null
+          version_number: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          credential_id?: string
+          encrypted_payload_ref?: string
+          id?: string
+          is_active?: boolean
+          redacted_preview?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credential_versions_credential_id_fkey"
+            columns: ["credential_id"]
+            isOneToOne: false
+            referencedRelation: "credentials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credentials: {
+        Row: {
+          created_at: string
+          created_by: string
+          environment_id: string | null
+          id: string
+          label: string
+          last_rotated_at: string | null
+          organization_id: string
+          project_id: string | null
+          provider_id: string
+          status: Database["public"]["Enums"]["credential_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          environment_id?: string | null
+          id?: string
+          label: string
+          last_rotated_at?: string | null
+          organization_id: string
+          project_id?: string | null
+          provider_id: string
+          status?: Database["public"]["Enums"]["credential_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          environment_id?: string | null
+          id?: string
+          label?: string
+          last_rotated_at?: string | null
+          organization_id?: string
+          project_id?: string | null
+          provider_id?: string
+          status?: Database["public"]["Enums"]["credential_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credentials_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "credential_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       environments: {
         Row: {
           created_at: string
@@ -253,9 +615,27 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "admin" | "manager" | "operator" | "viewer"
+      binding_status: "active" | "paused" | "error"
+      connector_category:
+        | "ai"
+        | "payments"
+        | "messaging"
+        | "social"
+        | "database"
+        | "universal"
+        | "other"
+      connector_status: "available" | "beta" | "deprecated"
+      credential_status: "active" | "rotating" | "deactivated"
       env_type: "development" | "staging" | "production"
+      health_status: "healthy" | "degraded" | "failed" | "unknown"
       org_status: "active" | "suspended" | "archived"
       project_status: "active" | "paused" | "archived"
+      rotation_reason:
+        | "scheduled"
+        | "manual"
+        | "compromised"
+        | "policy"
+        | "initial"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -384,9 +764,29 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "admin", "manager", "operator", "viewer"],
+      binding_status: ["active", "paused", "error"],
+      connector_category: [
+        "ai",
+        "payments",
+        "messaging",
+        "social",
+        "database",
+        "universal",
+        "other",
+      ],
+      connector_status: ["available", "beta", "deprecated"],
+      credential_status: ["active", "rotating", "deactivated"],
       env_type: ["development", "staging", "production"],
+      health_status: ["healthy", "degraded", "failed", "unknown"],
       org_status: ["active", "suspended", "archived"],
       project_status: ["active", "paused", "archived"],
+      rotation_reason: [
+        "scheduled",
+        "manual",
+        "compromised",
+        "policy",
+        "initial",
+      ],
     },
   },
 } as const
