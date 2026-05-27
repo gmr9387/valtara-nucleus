@@ -158,7 +158,7 @@ export function useOrgMembers(orgId: string | null) {
         .order("created_at", { ascending: true });
 
       if (!joined.error) {
-        return (joined.data ?? []) as MembershipRow[];
+        return (joined.data ?? []) as unknown as MembershipRow[];
       }
 
       const fallback = await supabase
