@@ -10,14 +10,19 @@ import { LogOut } from "lucide-react";
 
 import { AppSidebar } from "@/components/AppSidebar";
 import { OrgSwitcher } from "@/components/OrgSwitcher";
-import { supabase } from "@/integrations/supabase/client";
-import { createCorrelationId, logAudit } from "@/lib/audit";
 import { useAuth } from "@/lib/auth-context";
+import { createCorrelationId, logAudit } from "@/lib/audit";
 import { useMyOrganizations } from "@/lib/queries";
 import { useOrgStore } from "@/lib/org-store";
+import {
+  RouteErrorComponent,
+  RouteNotFoundComponent,
+} from "@/components/system/RouteErrorComponent";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
+  errorComponent: RouteErrorComponent,
+  notFoundComponent: RouteNotFoundComponent,
 });
 
 function AppLayout() {
