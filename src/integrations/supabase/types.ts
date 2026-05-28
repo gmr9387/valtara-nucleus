@@ -597,6 +597,135 @@ export type Database = {
           },
         ]
       }
+      telemetry_events: {
+        Row: {
+          attributes_json: Json | null
+          correlation_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          message: string | null
+          module: string
+          organization_id: string | null
+          severity: Database["public"]["Enums"]["telemetry_severity"]
+          span_id: string | null
+          trace_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attributes_json?: Json | null
+          correlation_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          message?: string | null
+          module: string
+          organization_id?: string | null
+          severity?: Database["public"]["Enums"]["telemetry_severity"]
+          span_id?: string | null
+          trace_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attributes_json?: Json | null
+          correlation_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          message?: string | null
+          module?: string
+          organization_id?: string | null
+          severity?: Database["public"]["Enums"]["telemetry_severity"]
+          span_id?: string | null
+          trace_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      telemetry_metrics: {
+        Row: {
+          attributes_json: Json | null
+          created_at: string
+          id: string
+          metric_name: string
+          metric_value: number
+          module: string
+          organization_id: string | null
+          unit: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attributes_json?: Json | null
+          created_at?: string
+          id?: string
+          metric_name: string
+          metric_value: number
+          module: string
+          organization_id?: string | null
+          unit?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attributes_json?: Json | null
+          created_at?: string
+          id?: string
+          metric_name?: string
+          metric_value?: number
+          module?: string
+          organization_id?: string | null
+          unit?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      telemetry_traces: {
+        Row: {
+          attributes_json: Json | null
+          created_at: string
+          duration_ms: number | null
+          ended_at: string | null
+          id: string
+          name: string
+          organization_id: string | null
+          parent_span_id: string | null
+          span_id: string
+          started_at: string
+          status: Database["public"]["Enums"]["telemetry_span_status"]
+          trace_id: string
+          user_id: string | null
+        }
+        Insert: {
+          attributes_json?: Json | null
+          created_at?: string
+          duration_ms?: number | null
+          ended_at?: string | null
+          id?: string
+          name: string
+          organization_id?: string | null
+          parent_span_id?: string | null
+          span_id: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["telemetry_span_status"]
+          trace_id: string
+          user_id?: string | null
+        }
+        Update: {
+          attributes_json?: Json | null
+          created_at?: string
+          duration_ms?: number | null
+          ended_at?: string | null
+          id?: string
+          name?: string
+          organization_id?: string | null
+          parent_span_id?: string | null
+          span_id?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["telemetry_span_status"]
+          trace_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -636,6 +765,8 @@ export type Database = {
         | "compromised"
         | "policy"
         | "initial"
+      telemetry_severity: "debug" | "info" | "warn" | "error" | "critical"
+      telemetry_span_status: "ok" | "error" | "cancelled" | "unset"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -787,6 +918,8 @@ export const Constants = {
         "policy",
         "initial",
       ],
+      telemetry_severity: ["debug", "info", "warn", "error", "critical"],
+      telemetry_span_status: ["ok", "error", "cancelled", "unset"],
     },
   },
 } as const
