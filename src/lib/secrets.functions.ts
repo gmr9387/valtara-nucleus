@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   createCredentialSchema,
@@ -7,32 +8,56 @@ import {
   buildRedactedPreview,
 } from "@/lib/schemas";
 
-/**
- * Server-only contract for credential write operations.
- *
- * These functions are the only authorized path to write credential material.
- * Raw secret bytes never traverse the browser bundle, never appear in TanStack
- * Query caches, and never enter `audit_events` payloads.
- *
- * The current implementation stores an opaque `encrypted_payload_ref` which is
- * a server-generated identifier. Phase 3 will swap the reference resolution
- * for a real KMS (Supabase Vault / AWS KMS / GCP KMS) without changing this
- * function contract or any downstream caller.
- */
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL;
+
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+function adminClient() {
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+    throw new Error("Missing Supabase service-role server environment.");
+  }
+
+  return createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
+  });
+}
 
 function makePayloadRef(): string {
-  // Opaque, non-reversible reference. KMS integration replaces this body.
   return `kms_pending:${crypto.randomUUID()}`;
+}
+
+async function assertOwnerOrAdmin(args: {
+  admin: ReturnType<typeof adminClient>;
+  organizationId: string;
+  userId: string;
+}) {
+  const { data, error } = await args.admin.rpc("has_org_role", {
+    _org: args.organizationId,
+    _user: args.userId,
+    _roles: ["owner", "admin"],
+  });
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Owner or admin role required.");
 }
 
 export const createSecret = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => createCredentialSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
+    const admin = adminClient();
 
-    // RLS enforces that only owners/admins may insert.
-    const credIns = await supabase
+    await assertOwnerOrAdmin({
+      admin,
+      organizationId: data.organization_id,
+      userId,
+    });
+
+    const correlationId = crypto.randomUUID();
+
+    const credIns = await admin
       .from("credentials")
       .insert({
         organization_id: data.organization_id,
@@ -46,9 +71,10 @@ export const createSecret = createServerFn({ method: "POST" })
       })
       .select()
       .single();
+
     if (credIns.error) throw new Error(credIns.error.message);
 
-    const versionIns = await supabase
+    const versionIns = await admin
       .from("credential_versions")
       .insert({
         credential_id: credIns.data.id,
@@ -58,11 +84,12 @@ export const createSecret = createServerFn({ method: "POST" })
         created_by: userId,
         is_active: true,
       })
-      .select()
+      .select("id, version_number, redacted_preview")
       .single();
+
     if (versionIns.error) throw new Error(versionIns.error.message);
 
-    await supabase.from("credential_rotation_events").insert({
+    await admin.from("credential_rotation_events").insert({
       credential_id: credIns.data.id,
       previous_version_id: null,
       next_version_id: versionIns.data.id,
@@ -70,51 +97,72 @@ export const createSecret = createServerFn({ method: "POST" })
       triggered_by: userId,
     });
 
-    await supabase.from("audit_events").insert({
+    await admin.from("audit_events").insert({
       organization_id: data.organization_id,
       user_id: userId,
       module: "secrets",
       entity_type: "credential",
       entity_id: credIns.data.id,
       action: "create",
-      after_json: { label: data.label, provider_id: data.provider_id, version: 1 },
+      correlation_id: correlationId,
+      after_json: {
+        label: data.label,
+        provider_id: data.provider_id,
+        version: 1,
+        redacted_preview: versionIns.data.redacted_preview,
+      },
     });
 
-    return { credential_id: credIns.data.id, version_id: versionIns.data.id };
+    return {
+      credential_id: credIns.data.id,
+      version_id: versionIns.data.id,
+    };
   });
 
 export const rotateSecret = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => rotateCredentialSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
+    const admin = adminClient();
 
-    const cred = await supabase
+    const cred = await admin
       .from("credentials")
       .select("id, organization_id")
       .eq("id", data.credential_id)
       .single();
+
     if (cred.error) throw new Error(cred.error.message);
 
-    const prev = await supabase
+    await assertOwnerOrAdmin({
+      admin,
+      organizationId: cred.data.organization_id,
+      userId,
+    });
+
+    const correlationId = crypto.randomUUID();
+
+    const prev = await admin
       .from("credential_versions")
       .select("id, version_number")
       .eq("credential_id", data.credential_id)
       .eq("is_active", true)
       .maybeSingle();
+
     if (prev.error) throw new Error(prev.error.message);
 
-    // Deactivate current to satisfy unique-active constraint.
     if (prev.data) {
-      const deact = await supabase
+      const deact = await admin
         .from("credential_versions")
         .update({ is_active: false })
         .eq("id", prev.data.id);
+
       if (deact.error) throw new Error(deact.error.message);
     }
 
     const nextNumber = (prev.data?.version_number ?? 0) + 1;
-    const versionIns = await supabase
+
+    const versionIns = await admin
       .from("credential_versions")
       .insert({
         credential_id: data.credential_id,
@@ -124,16 +172,22 @@ export const rotateSecret = createServerFn({ method: "POST" })
         created_by: userId,
         is_active: true,
       })
-      .select()
+      .select("id, version_number, redacted_preview")
       .single();
+
     if (versionIns.error) throw new Error(versionIns.error.message);
 
-    await supabase
+    const upd = await admin
       .from("credentials")
-      .update({ last_rotated_at: new Date().toISOString(), status: "active" })
+      .update({
+        last_rotated_at: new Date().toISOString(),
+        status: "active",
+      })
       .eq("id", data.credential_id);
 
-    await supabase.from("credential_rotation_events").insert({
+    if (upd.error) throw new Error(upd.error.message);
+
+    await admin.from("credential_rotation_events").insert({
       credential_id: data.credential_id,
       previous_version_id: prev.data?.id ?? null,
       next_version_id: versionIns.data.id,
@@ -141,51 +195,73 @@ export const rotateSecret = createServerFn({ method: "POST" })
       triggered_by: userId,
     });
 
-    await supabase.from("audit_events").insert({
+    await admin.from("audit_events").insert({
       organization_id: cred.data.organization_id,
       user_id: userId,
       module: "secrets",
       entity_type: "credential",
       entity_id: data.credential_id,
       action: "rotate_secret",
-      after_json: { version: nextNumber, reason: data.reason },
+      correlation_id: correlationId,
+      after_json: {
+        version: nextNumber,
+        reason: data.reason,
+        redacted_preview: versionIns.data.redacted_preview,
+      },
     });
 
-    return { version_id: versionIns.data.id, version_number: nextNumber };
+    return {
+      version_id: versionIns.data.id,
+      version_number: nextNumber,
+    };
   });
 
 export const deactivateSecret = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => deactivateCredentialSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
+    const admin = adminClient();
 
-    const cred = await supabase
+    const cred = await admin
       .from("credentials")
       .select("id, organization_id")
       .eq("id", data.credential_id)
       .single();
+
     if (cred.error) throw new Error(cred.error.message);
 
-    const upd = await supabase
+    await assertOwnerOrAdmin({
+      admin,
+      organizationId: cred.data.organization_id,
+      userId,
+    });
+
+    const correlationId = crypto.randomUUID();
+
+    const upd = await admin
       .from("credentials")
       .update({ status: "deactivated" })
       .eq("id", data.credential_id);
+
     if (upd.error) throw new Error(upd.error.message);
 
-    await supabase
+    const versions = await admin
       .from("credential_versions")
       .update({ is_active: false })
       .eq("credential_id", data.credential_id)
       .eq("is_active", true);
 
-    await supabase.from("audit_events").insert({
+    if (versions.error) throw new Error(versions.error.message);
+
+    await admin.from("audit_events").insert({
       organization_id: cred.data.organization_id,
       user_id: userId,
       module: "secrets",
       entity_type: "credential",
       entity_id: data.credential_id,
       action: "delete",
+      correlation_id: correlationId,
       after_json: { status: "deactivated" },
     });
 
