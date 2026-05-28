@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
-  const { session, loading, user } = useAuth();
+  const { session, loading, user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const orgs = useMyOrganizations();
@@ -105,7 +105,7 @@ function AppLayout() {
                   correlation_id: correlationId,
                 });
 
-                await supabase.auth.signOut();
+                await signOut();
                 setCurrentOrgId(null);
                 navigate({ to: "/login", replace: true });
               }}
