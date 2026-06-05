@@ -726,6 +726,263 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_audit_events: {
+        Row: {
+          actor_id: string | null
+          event_type: string
+          id: string
+          occurred_at: string
+          organization_id: string
+          payload: Json | null
+          run_id: string | null
+          workflow_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          event_type: string
+          id?: string
+          occurred_at?: string
+          organization_id: string
+          payload?: Json | null
+          run_id?: string | null
+          workflow_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          event_type?: string
+          id?: string
+          occurred_at?: string
+          organization_id?: string
+          payload?: Json | null
+          run_id?: string | null
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_audit_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_audit_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_audit_events_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          error_json: Json | null
+          id: string
+          input_json: Json | null
+          organization_id: string
+          output_json: Json | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["workflow_run_status"]
+          updated_at: string
+          version_id: string
+          workflow_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          error_json?: Json | null
+          id?: string
+          input_json?: Json | null
+          organization_id: string
+          output_json?: Json | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["workflow_run_status"]
+          updated_at?: string
+          version_id: string
+          workflow_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          error_json?: Json | null
+          id?: string
+          input_json?: Json | null
+          organization_id?: string
+          output_json?: Json | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["workflow_run_status"]
+          updated_at?: string
+          version_id?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_runs_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_steps: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_json: Json | null
+          id: string
+          input_json: Json | null
+          output_json: Json | null
+          run_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["workflow_step_status"]
+          step_key: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_json?: Json | null
+          id?: string
+          input_json?: Json | null
+          output_json?: Json | null
+          run_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["workflow_step_status"]
+          step_key: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_json?: Json | null
+          id?: string
+          input_json?: Json | null
+          output_json?: Json | null
+          run_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["workflow_step_status"]
+          step_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_steps_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_versions: {
+        Row: {
+          created_at: string
+          created_by: string
+          definition_json: Json
+          id: string
+          published_at: string | null
+          status: Database["public"]["Enums"]["workflow_version_status"]
+          version_number: number
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          definition_json?: Json
+          id?: string
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["workflow_version_status"]
+          version_number: number
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          definition_json?: Json
+          id?: string
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["workflow_version_status"]
+          version_number?: number
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_versions_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflows: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          organization_id: string
+          status: Database["public"]["Enums"]["workflow_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          status?: Database["public"]["Enums"]["workflow_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          status?: Database["public"]["Enums"]["workflow_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflows_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -767,6 +1024,20 @@ export type Database = {
         | "initial"
       telemetry_severity: "debug" | "info" | "warn" | "error" | "critical"
       telemetry_span_status: "ok" | "error" | "cancelled" | "unset"
+      workflow_run_status:
+        | "pending"
+        | "running"
+        | "completed"
+        | "failed"
+        | "cancelled"
+      workflow_status: "draft" | "active" | "archived"
+      workflow_step_status:
+        | "pending"
+        | "running"
+        | "completed"
+        | "failed"
+        | "skipped"
+      workflow_version_status: "draft" | "published" | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -920,6 +1191,22 @@ export const Constants = {
       ],
       telemetry_severity: ["debug", "info", "warn", "error", "critical"],
       telemetry_span_status: ["ok", "error", "cancelled", "unset"],
+      workflow_run_status: [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+      ],
+      workflow_status: ["draft", "active", "archived"],
+      workflow_step_status: [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "skipped",
+      ],
+      workflow_version_status: ["draft", "published", "archived"],
     },
   },
 } as const
