@@ -25,6 +25,7 @@ import { Route as AppDecisionsRouteImport } from './routes/_app.decisions'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppConnectorsRouteImport } from './routes/_app.connectors'
 import { Route as AppAuditRouteImport } from './routes/_app.audit'
+import { Route as AppWorkflowsWorkflowIdRouteImport } from './routes/_app.workflows.$workflowId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -105,6 +106,11 @@ const AppAuditRoute = AppAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AppRoute,
 } as any)
+const AppWorkflowsWorkflowIdRoute = AppWorkflowsWorkflowIdRouteImport.update({
+  id: '/$workflowId',
+  path: '/$workflowId',
+  getParentRoute: () => AppWorkflowsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -121,7 +127,8 @@ export interface FileRoutesByFullPath {
   '/secrets': typeof AppSecretsRoute
   '/telemetry': typeof AppTelemetryRoute
   '/users': typeof AppUsersRoute
-  '/workflows': typeof AppWorkflowsRoute
+  '/workflows': typeof AppWorkflowsRouteWithChildren
+  '/workflows/$workflowId': typeof AppWorkflowsWorkflowIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -138,7 +145,8 @@ export interface FileRoutesByTo {
   '/secrets': typeof AppSecretsRoute
   '/telemetry': typeof AppTelemetryRoute
   '/users': typeof AppUsersRoute
-  '/workflows': typeof AppWorkflowsRoute
+  '/workflows': typeof AppWorkflowsRouteWithChildren
+  '/workflows/$workflowId': typeof AppWorkflowsWorkflowIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -157,7 +165,8 @@ export interface FileRoutesById {
   '/_app/secrets': typeof AppSecretsRoute
   '/_app/telemetry': typeof AppTelemetryRoute
   '/_app/users': typeof AppUsersRoute
-  '/_app/workflows': typeof AppWorkflowsRoute
+  '/_app/workflows': typeof AppWorkflowsRouteWithChildren
+  '/_app/workflows/$workflowId': typeof AppWorkflowsWorkflowIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/telemetry'
     | '/users'
     | '/workflows'
+    | '/workflows/$workflowId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/telemetry'
     | '/users'
     | '/workflows'
+    | '/workflows/$workflowId'
   id:
     | '__root__'
     | '/'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/_app/telemetry'
     | '/_app/users'
     | '/_app/workflows'
+    | '/_app/workflows/$workflowId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -334,8 +346,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/workflows/$workflowId': {
+      id: '/_app/workflows/$workflowId'
+      path: '/$workflowId'
+      fullPath: '/workflows/$workflowId'
+      preLoaderRoute: typeof AppWorkflowsWorkflowIdRouteImport
+      parentRoute: typeof AppWorkflowsRoute
+    }
   }
 }
+
+interface AppWorkflowsRouteChildren {
+  AppWorkflowsWorkflowIdRoute: typeof AppWorkflowsWorkflowIdRoute
+}
+
+const AppWorkflowsRouteChildren: AppWorkflowsRouteChildren = {
+  AppWorkflowsWorkflowIdRoute: AppWorkflowsWorkflowIdRoute,
+}
+
+const AppWorkflowsRouteWithChildren = AppWorkflowsRoute._addFileChildren(
+  AppWorkflowsRouteChildren,
+)
 
 interface AppRouteChildren {
   AppAuditRoute: typeof AppAuditRoute
@@ -350,7 +381,7 @@ interface AppRouteChildren {
   AppSecretsRoute: typeof AppSecretsRoute
   AppTelemetryRoute: typeof AppTelemetryRoute
   AppUsersRoute: typeof AppUsersRoute
-  AppWorkflowsRoute: typeof AppWorkflowsRoute
+  AppWorkflowsRoute: typeof AppWorkflowsRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -366,7 +397,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSecretsRoute: AppSecretsRoute,
   AppTelemetryRoute: AppTelemetryRoute,
   AppUsersRoute: AppUsersRoute,
-  AppWorkflowsRoute: AppWorkflowsRoute,
+  AppWorkflowsRoute: AppWorkflowsRouteWithChildren,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -379,3 +410,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
