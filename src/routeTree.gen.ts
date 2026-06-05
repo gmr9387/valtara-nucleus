@@ -25,6 +25,9 @@ import { Route as AppDecisionsRouteImport } from './routes/_app.decisions'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppConnectorsRouteImport } from './routes/_app.connectors'
 import { Route as AppAuditRouteImport } from './routes/_app.audit'
+import { Route as AppWorkflowsWorkflowIdRouteImport } from './routes/_app.workflows.$workflowId'
+import { Route as AppWorkflowsRunsRunIdRouteImport } from './routes/_app.workflows.runs.$runId'
+import { Route as AppWorkflowsWorkflowIdRunsRouteImport } from './routes/_app.workflows.$workflowId.runs'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -105,6 +108,22 @@ const AppAuditRoute = AppAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AppRoute,
 } as any)
+const AppWorkflowsWorkflowIdRoute = AppWorkflowsWorkflowIdRouteImport.update({
+  id: '/$workflowId',
+  path: '/$workflowId',
+  getParentRoute: () => AppWorkflowsRoute,
+} as any)
+const AppWorkflowsRunsRunIdRoute = AppWorkflowsRunsRunIdRouteImport.update({
+  id: '/runs/$runId',
+  path: '/runs/$runId',
+  getParentRoute: () => AppWorkflowsRoute,
+} as any)
+const AppWorkflowsWorkflowIdRunsRoute =
+  AppWorkflowsWorkflowIdRunsRouteImport.update({
+    id: '/runs',
+    path: '/runs',
+    getParentRoute: () => AppWorkflowsWorkflowIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -121,7 +140,10 @@ export interface FileRoutesByFullPath {
   '/secrets': typeof AppSecretsRoute
   '/telemetry': typeof AppTelemetryRoute
   '/users': typeof AppUsersRoute
-  '/workflows': typeof AppWorkflowsRoute
+  '/workflows': typeof AppWorkflowsRouteWithChildren
+  '/workflows/$workflowId': typeof AppWorkflowsWorkflowIdRouteWithChildren
+  '/workflows/$workflowId/runs': typeof AppWorkflowsWorkflowIdRunsRoute
+  '/workflows/runs/$runId': typeof AppWorkflowsRunsRunIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -138,7 +160,10 @@ export interface FileRoutesByTo {
   '/secrets': typeof AppSecretsRoute
   '/telemetry': typeof AppTelemetryRoute
   '/users': typeof AppUsersRoute
-  '/workflows': typeof AppWorkflowsRoute
+  '/workflows': typeof AppWorkflowsRouteWithChildren
+  '/workflows/$workflowId': typeof AppWorkflowsWorkflowIdRouteWithChildren
+  '/workflows/$workflowId/runs': typeof AppWorkflowsWorkflowIdRunsRoute
+  '/workflows/runs/$runId': typeof AppWorkflowsRunsRunIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -157,7 +182,10 @@ export interface FileRoutesById {
   '/_app/secrets': typeof AppSecretsRoute
   '/_app/telemetry': typeof AppTelemetryRoute
   '/_app/users': typeof AppUsersRoute
-  '/_app/workflows': typeof AppWorkflowsRoute
+  '/_app/workflows': typeof AppWorkflowsRouteWithChildren
+  '/_app/workflows/$workflowId': typeof AppWorkflowsWorkflowIdRouteWithChildren
+  '/_app/workflows/$workflowId/runs': typeof AppWorkflowsWorkflowIdRunsRoute
+  '/_app/workflows/runs/$runId': typeof AppWorkflowsRunsRunIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -177,6 +205,9 @@ export interface FileRouteTypes {
     | '/telemetry'
     | '/users'
     | '/workflows'
+    | '/workflows/$workflowId'
+    | '/workflows/$workflowId/runs'
+    | '/workflows/runs/$runId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -194,6 +225,9 @@ export interface FileRouteTypes {
     | '/telemetry'
     | '/users'
     | '/workflows'
+    | '/workflows/$workflowId'
+    | '/workflows/$workflowId/runs'
+    | '/workflows/runs/$runId'
   id:
     | '__root__'
     | '/'
@@ -212,6 +246,9 @@ export interface FileRouteTypes {
     | '/_app/telemetry'
     | '/_app/users'
     | '/_app/workflows'
+    | '/_app/workflows/$workflowId'
+    | '/_app/workflows/$workflowId/runs'
+    | '/_app/workflows/runs/$runId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -334,8 +371,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/workflows/$workflowId': {
+      id: '/_app/workflows/$workflowId'
+      path: '/$workflowId'
+      fullPath: '/workflows/$workflowId'
+      preLoaderRoute: typeof AppWorkflowsWorkflowIdRouteImport
+      parentRoute: typeof AppWorkflowsRoute
+    }
+    '/_app/workflows/runs/$runId': {
+      id: '/_app/workflows/runs/$runId'
+      path: '/runs/$runId'
+      fullPath: '/workflows/runs/$runId'
+      preLoaderRoute: typeof AppWorkflowsRunsRunIdRouteImport
+      parentRoute: typeof AppWorkflowsRoute
+    }
+    '/_app/workflows/$workflowId/runs': {
+      id: '/_app/workflows/$workflowId/runs'
+      path: '/runs'
+      fullPath: '/workflows/$workflowId/runs'
+      preLoaderRoute: typeof AppWorkflowsWorkflowIdRunsRouteImport
+      parentRoute: typeof AppWorkflowsWorkflowIdRoute
+    }
   }
 }
+
+interface AppWorkflowsWorkflowIdRouteChildren {
+  AppWorkflowsWorkflowIdRunsRoute: typeof AppWorkflowsWorkflowIdRunsRoute
+}
+
+const AppWorkflowsWorkflowIdRouteChildren: AppWorkflowsWorkflowIdRouteChildren =
+  {
+    AppWorkflowsWorkflowIdRunsRoute: AppWorkflowsWorkflowIdRunsRoute,
+  }
+
+const AppWorkflowsWorkflowIdRouteWithChildren =
+  AppWorkflowsWorkflowIdRoute._addFileChildren(
+    AppWorkflowsWorkflowIdRouteChildren,
+  )
+
+interface AppWorkflowsRouteChildren {
+  AppWorkflowsWorkflowIdRoute: typeof AppWorkflowsWorkflowIdRouteWithChildren
+  AppWorkflowsRunsRunIdRoute: typeof AppWorkflowsRunsRunIdRoute
+}
+
+const AppWorkflowsRouteChildren: AppWorkflowsRouteChildren = {
+  AppWorkflowsWorkflowIdRoute: AppWorkflowsWorkflowIdRouteWithChildren,
+  AppWorkflowsRunsRunIdRoute: AppWorkflowsRunsRunIdRoute,
+}
+
+const AppWorkflowsRouteWithChildren = AppWorkflowsRoute._addFileChildren(
+  AppWorkflowsRouteChildren,
+)
 
 interface AppRouteChildren {
   AppAuditRoute: typeof AppAuditRoute
@@ -350,7 +436,7 @@ interface AppRouteChildren {
   AppSecretsRoute: typeof AppSecretsRoute
   AppTelemetryRoute: typeof AppTelemetryRoute
   AppUsersRoute: typeof AppUsersRoute
-  AppWorkflowsRoute: typeof AppWorkflowsRoute
+  AppWorkflowsRoute: typeof AppWorkflowsRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -366,7 +452,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSecretsRoute: AppSecretsRoute,
   AppTelemetryRoute: AppTelemetryRoute,
   AppUsersRoute: AppUsersRoute,
-  AppWorkflowsRoute: AppWorkflowsRoute,
+  AppWorkflowsRoute: AppWorkflowsRouteWithChildren,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -379,13 +465,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

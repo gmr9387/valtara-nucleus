@@ -17,7 +17,14 @@ export type Permission =
   | "connectors:manage"
   | "connectors:read"
   | "audit:read"
-  | "telemetry:read";
+  | "telemetry:read"
+  | "workflows:read"
+  | "workflows:create"
+  | "workflows:update"
+  | "workflows:publish"
+  | "workflows:run"
+  | "workflows:cancel"
+  | "workflows:admin";
 
 const RULES: Record<Permission, AppRole[]> = {
   "org:manage": ["owner", "admin"],
@@ -31,6 +38,13 @@ const RULES: Record<Permission, AppRole[]> = {
   "connectors:read": ["owner", "admin", "manager", "operator", "viewer"],
   "audit:read": ["owner", "admin", "manager", "operator", "viewer"],
   "telemetry:read": ["owner", "admin", "manager", "operator", "viewer"],
+  "workflows:read": ["owner", "admin", "manager", "operator", "viewer"],
+  "workflows:create": ["owner", "admin", "manager"],
+  "workflows:update": ["owner", "admin", "manager"],
+  "workflows:publish": ["owner", "admin"],
+  "workflows:run": ["owner", "admin", "manager", "operator"],
+  "workflows:cancel": ["owner", "admin", "manager", "operator"],
+  "workflows:admin": ["owner", "admin"],
 };
 
 export function roleHas(role: AppRole | null | undefined, perm: Permission): boolean {
