@@ -124,9 +124,10 @@ function WorkflowsPage() {
             ) : workflows.error ? (
               <ErrorState
                 title="Failed to load workflows"
-                description={workflows.error instanceof Error ? workflows.error.message : ""}
-                onRetry={() => workflows.refetch()}
+                error={workflows.error}
+                onRetry={() => void workflows.refetch()}
               />
+
             ) : (workflows.data ?? []).length === 0 ? (
               <EmptyState
                 title="No workflows yet"
