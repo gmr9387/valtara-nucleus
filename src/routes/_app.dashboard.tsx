@@ -65,7 +65,7 @@ function Dashboard() {
     <>
       <PageHeader
         eyebrow="OVERVIEW"
-        title={currentOrg?.name ?? "Valtaris Core"}
+        title={currentOrg?.name ?? "ValtariOS Core"}
         description="Live control plane for tenants, projects, environments, audit activity, and platform foundations."
       />
 
@@ -73,7 +73,7 @@ function Dashboard() {
         {!currentOrgId ? (
           <EmptyState
             title="Select or create an organization"
-            description="Valtaris Core starts with a tenant. Create an organization, then add projects and environments."
+            description="ValtariOS Core starts with a tenant. Create an organization, then add projects and environments."
             icon={<Building2 className="h-5 w-5" />}
           />
         ) : (
