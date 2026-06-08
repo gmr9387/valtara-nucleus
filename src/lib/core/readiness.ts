@@ -25,6 +25,14 @@ export interface AreaReadiness {
 export interface OperationsReadiness {
   orgScopeId: string;
   areas: AreaReadiness[];
+  summary: {
+    ready: number;
+    partial: number;
+    absent: number;
+    unknown: number;
+    total: number;
+    readinessScore: number;
+  };
 }
 
 interface RawCounts {
@@ -42,6 +50,10 @@ interface RawCounts {
   workflowRunsFailed: number;
   telemetryEvents24h: number;
   auditEvents24h: number;
+}
+
+function getCount(result: { count: number | null }): number {
+  return result.count ?? 0;
 }
 
 export function useOperationsReadiness(orgId: string | null) {
@@ -68,51 +80,159 @@ export function useOperationsReadiness(orgId: string | null) {
         telemetryEvents24h,
         auditEvents24h,
       ] = await Promise.all([
-        supabase.from("projects").select("id", { count: "exact", head: true }).eq("organization_id", orgId!),
-        supabase.from("environments").select("id, projects!inner(organization_id)", { count: "exact", head: true }).eq("projects.organization_id", orgId!),
-        supabase.from("credentials").select("id", { count: "exact", head: true }).eq("organization_id", orgId!),
-        supabase.from("credentials").select("id", { count: "exact", head: true }).eq("organization_id", orgId!).eq("status", "active"),
-        supabase.from("credentials").select("id", { count: "exact", head: true }).eq("organization_id", orgId!).eq("status", "rotating"),
-        supabase.from("connector_bindings").select("id", { count: "exact", head: true }).eq("organization_id", orgId!),
-        supabase.from("connector_bindings").select("id", { count: "exact", head: true }).eq("organization_id", orgId!).eq("status", "active"),
-        supabase.from("connector_bindings").select("id", { count: "exact", head: true }).eq("organization_id", orgId!).eq("status", "error"),
-        supabase.from("workflows").select("id", { count: "exact", head: true }).eq("organization_id", orgId!),
-        supabase.from("workflows").select("id", { count: "exact", head: true }).eq("organization_id", orgId!).eq("status", "active"),
-        supabase.from("workflow_runs").select("id", { count: "exact", head: true }).eq("organization_id", orgId!).gte("created_at", since24h),
-        supabase.from("workflow_runs").select("id", { count: "exact", head: true }).eq("organization_id", orgId!).eq("status", "failed").gte("created_at", since24h),
-        supabase.from("telemetry_events").select("id", { count: "exact", head: true }).eq("organization_id", orgId!).gte("occurred_at", since24h),
-        supabase.from("audit_events").select("id", { count: "exact", head: true }).eq("organization_id", orgId!).gte("created_at", since24h),
+        supabase
+          .from("projects")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId!),
+
+        supabase
+          .from("environments")
+          .select("id, projects!inner(organization_id)", { count: "exact", head: true })
+          .eq("projects.organization_id", orgId!),
+
+        supabase
+          .from("credentials")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId!),
+
+        supabase
+          .from("credentials")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId!)
+          .eq("status", "active"),
+
+        supabase
+          .from("credentials")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId!)
+          .eq("status", "rotating"),
+
+        supabase
+          .from("connector_bindings")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId!),
+
+        supabase
+          .from("connector_bindings")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId!)
+          .eq("status", "active"),
+
+        supabase
+          .from("connector_bindings")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId!)
+          .eq("status", "error"),
+
+        supabase
+          .from("workflows")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId!),
+
+        supabase
+          .from("workflows")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId!)
+          .eq("status", "active"),
+
+        supabase
+          .from("workflow_runs")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId!)
+          .gte("created_at", since24h),
+
+        supabase
+          .from("workflow_runs")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId!)
+          .eq("status", "failed")
+          .gte("created_at", since24h),
+
+        supabase
+          .from("telemetry_events")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId!)
+          .gte("occurred_at", since24h),
+
+        supabase
+          .from("audit_events")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", orgId!)
+          .gte("created_at", since24h),
       ]);
 
-      const errs = [
-        projects.error, environmentsViaJoin.error, credentialsAll.error, credentialsActive.error,
-        credentialsRotating.error, bindings.error, bindingsActive.error, bindingsError.error,
-        workflows.error, workflowsActive.error, workflowRunsRecent.error, workflowRunsFailed.error,
-        telemetryEvents24h.error, auditEvents24h.error,
+      const errors = [
+        projects.error,
+        environmentsViaJoin.error,
+        credentialsAll.error,
+        credentialsActive.error,
+        credentialsRotating.error,
+        bindings.error,
+        bindingsActive.error,
+        bindingsError.error,
+        workflows.error,
+        workflowsActive.error,
+        workflowRunsRecent.error,
+        workflowRunsFailed.error,
+        telemetryEvents24h.error,
+        auditEvents24h.error,
       ].filter(Boolean);
-      if (errs.length > 0) throw errs[0];
+
+      if (errors.length > 0) throw errors[0];
 
       const raw: RawCounts = {
-        projects: projects.count ?? 0,
-        environments: environmentsViaJoin.count ?? 0,
-        credentials: credentialsAll.count ?? 0,
-        credentialsActive: credentialsActive.count ?? 0,
-        credentialsRotating: credentialsRotating.count ?? 0,
-        bindings: bindings.count ?? 0,
-        bindingsActive: bindingsActive.count ?? 0,
-        bindingsError: bindingsError.count ?? 0,
-        workflows: workflows.count ?? 0,
-        workflowsActive: workflowsActive.count ?? 0,
-        workflowRunsRecent: workflowRunsRecent.count ?? 0,
-        workflowRunsFailed: workflowRunsFailed.count ?? 0,
-        telemetryEvents24h: telemetryEvents24h.count ?? 0,
-        auditEvents24h: auditEvents24h.count ?? 0,
+        projects: getCount(projects),
+        environments: getCount(environmentsViaJoin),
+        credentials: getCount(credentialsAll),
+        credentialsActive: getCount(credentialsActive),
+        credentialsRotating: getCount(credentialsRotating),
+        bindings: getCount(bindings),
+        bindingsActive: getCount(bindingsActive),
+        bindingsError: getCount(bindingsError),
+        workflows: getCount(workflows),
+        workflowsActive: getCount(workflowsActive),
+        workflowRunsRecent: getCount(workflowRunsRecent),
+        workflowRunsFailed: getCount(workflowRunsFailed),
+        telemetryEvents24h: getCount(telemetryEvents24h),
+        auditEvents24h: getCount(auditEvents24h),
       };
 
-      return { orgScopeId: orgId!, areas: deriveAreas(raw) };
+      const areas = deriveAreas(raw);
+
+      return {
+        orgScopeId: orgId!,
+        areas,
+        summary: summarizeAreas(areas),
+      };
     },
   });
-  
+}
+
+function summarizeAreas(areas: AreaReadiness[]) {
+  const summary = {
+    ready: 0,
+    partial: 0,
+    absent: 0,
+    unknown: 0,
+    total: areas.length,
+    readinessScore: 0,
+  };
+
+  for (const area of areas) {
+    summary[area.level]++;
+  }
+
+  const score =
+    areas.length > 0
+      ? Math.round(
+          ((summary.ready * 100 + summary.partial * 50 + summary.unknown * 25) /
+            areas.length),
+        )
+      : 0;
+
+  summary.readinessScore = score;
+
+  return summary;
 }
 
 function deriveAreas(r: RawCounts): AreaReadiness[] {
