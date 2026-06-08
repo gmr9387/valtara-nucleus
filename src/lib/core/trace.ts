@@ -16,5 +16,11 @@ import type { RuleEvaluation } from "./types";
 export function generateTrace(
   _evaluations: readonly RuleEvaluation[],
 ): TraceResult {
-  return { evaluations: [], records: [] };
+  return {
+    traceId: "",
+
+    evaluations: [],
+
+    records: [],
+  };
 }
