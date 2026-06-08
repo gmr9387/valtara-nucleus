@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Activity,
+  Cpu,
   Building2,
   FileStack,
   FolderKanban,
