@@ -44,26 +44,6 @@ interface RawCounts {
   auditEvents24h: number;
 }
 
-async function countExact(
-  table:
-    | "projects"
-    | "environments"
-    | "credentials"
-    | "connector_bindings"
-    | "workflows"
-    | "workflow_runs"
-    | "telemetry_events"
-    | "audit_events",
-  filter: (q: ReturnType<typeof supabase.from>) => unknown,
-): Promise<number> {
-  const base = supabase.from(table).select("id", { count: "exact", head: true });
-  const q = filter(base as never) as { count: number | null; error: unknown };
-  // The chain returns a thenable; await via Promise.resolve.
-  const { count, error } = (await q) as { count: number | null; error: unknown };
-  if (error) throw error;
-  return count ?? 0;
-}
-
 export function useOperationsReadiness(orgId: string | null) {
   return useQuery({
     enabled: !!orgId,
