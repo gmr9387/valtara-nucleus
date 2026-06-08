@@ -6,7 +6,7 @@
  *  - Corroboration across independent facts
  *  - Contradiction detection
  *  - Missing-fact penalties
- *  - Confidence band assignment (low / medium / high / verified)
+ *  - Confidence band assignment
  *
  * Status: Architecture Ready. Placeholder only.
  */
@@ -19,9 +19,16 @@ export function calculateConfidence(
   _facts: Readonly<Record<string, unknown>>,
 ): ConfidenceResult {
   return {
-    band: "low",
     score: 0,
+
+    band: "low",
+
     missingFacts: [],
+
     contradictions: [],
+
+    corroboratingSignals: 0,
+
+    dataQuality: 0,
   };
 }
