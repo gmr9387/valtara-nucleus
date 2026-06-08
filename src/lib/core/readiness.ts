@@ -112,7 +112,7 @@ export function useOperationsReadiness(orgId: string | null) {
       return { orgScopeId: orgId!, areas: deriveAreas(raw) };
     },
   });
-  void countExact;
+  
 }
 
 function deriveAreas(r: RawCounts): AreaReadiness[] {
