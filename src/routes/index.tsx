@@ -19,7 +19,7 @@ function Landing() {
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
           <div className="h-6 w-6 rounded-sm bg-primary" />
-          <span className="font-semibold tracking-tight">Valtaris Core</span>
+          <span className="font-semibold tracking-tight">ValtariOS Core</span>
         </div>
         <div className="flex items-center gap-3 text-sm">
           <Link to="/login" className="text-muted-foreground hover:text-foreground">Sign in</Link>
@@ -37,7 +37,7 @@ function Landing() {
         <p className="text-mono-xs text-muted-foreground">PLATFORM // v0.1</p>
         <h1 className="mt-4 text-5xl font-semibold tracking-tight md:text-6xl">
           The shared platform layer<br />
-          <span className="text-muted-foreground">for every Valtaris product.</span>
+          <span className="text-muted-foreground">for every ValtariOS product.</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground">
           Identity, tenancy, audit, telemetry, secrets, connectors, workflows, evidence,

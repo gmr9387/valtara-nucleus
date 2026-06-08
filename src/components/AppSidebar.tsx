@@ -70,7 +70,7 @@ export function AppSidebar() {
         </div>
 
         <div className="flex flex-col leading-tight">
-          <span className="text-sm font-semibold tracking-tight">Valtaris Core</span>
+          <span className="text-sm font-semibold tracking-tight">ValtariOS Core</span>
           <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
             Modular Monolith
           </span>

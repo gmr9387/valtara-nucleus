@@ -76,7 +76,7 @@ function LoginPage() {
       <div className="relative z-10 w-full max-w-sm">
         <Link to="/" className="mb-8 flex items-center justify-center gap-2">
           <div className="h-6 w-6 rounded-sm bg-primary" />
-          <span className="font-semibold tracking-tight">Valtaris Core</span>
+          <span className="font-semibold tracking-tight">ValtariOS Core</span>
         </Link>
 
         <div className="rounded-xl border border-border bg-surface-1 p-6 shadow-2xl">

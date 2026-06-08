@@ -57,8 +57,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Valtaris Core" },
-      { name: "description", content: "Valtaris Core — shared platform layer." },
+      { title: "ValtariOS Core" },
+      { name: "description", content: "ValtariOS Core — shared platform layer." },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

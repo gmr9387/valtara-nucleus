@@ -1,7 +1,7 @@
 /**
  * Workflow Runtime Engine
  * -----------------------
- * Shared platform substrate consumed by Valtaris products
+ * Shared platform substrate consumed by ValtariOS products
  * (Claim Clarity, Glue, DualPay, Guardian, future apps).
  *
  * Responsibilities:

@@ -61,7 +61,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Force dark — Valtaris Core is a dark-first console */
+/* Force dark — ValtariOS Core is a dark-first console */
 :root {
   --radius: 0.5rem;
 

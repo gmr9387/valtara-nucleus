@@ -51,7 +51,7 @@ function WorkflowsPage() {
       <PageHeader
         eyebrow="INFRASTRUCTURE"
         title="Workflows"
-        description="Definitions, versions, and runs. Shared runtime substrate for Valtaris products."
+        description="Definitions, versions, and runs. Shared runtime substrate for ValtariOS products."
         actions={
           <PermissionGate permission="workflows:create">
             <button

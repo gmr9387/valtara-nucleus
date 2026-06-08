@@ -137,7 +137,7 @@ function EmptyOrgPrompt() {
         </h2>
 
         <p className="mt-2 text-sm text-muted-foreground">
-          Every resource in Valtaris Core belongs to an organization.
+          Every resource in ValtariOS Core belongs to an organization.
         </p>
 
         <Link

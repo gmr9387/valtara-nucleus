@@ -108,7 +108,7 @@ function OrgsPage() {
         ) : (
           <EmptyState
             title="No organizations yet"
-            description="Create your first organization to start using Valtaris Core."
+            description="Create your first organization to start using ValtariOS Core."
             action={
               <button onClick={() => setOpen(true)} className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:opacity-90">
                 <Plus className="h-3.5 w-3.5" /> New organization
