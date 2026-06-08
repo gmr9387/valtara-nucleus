@@ -19,12 +19,20 @@ export function resolveDecision(
   return {
     decision: {
       id: "",
-      outcome: "inconclusive",
-      confidence: "low",
+
+      outcome: "unresolved",
+
+      confidence: 0,
+
+      confidenceBand: "low",
+
       severity: "info",
+
       rationale: "Phase 1 placeholder — extraction pending.",
+
       createdAt: new Date(0).toISOString(),
     },
+
     candidates: [],
   };
 }
