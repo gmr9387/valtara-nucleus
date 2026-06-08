@@ -23,6 +23,7 @@ import { Route as AppEvidenceRouteImport } from './routes/_app.evidence'
 import { Route as AppEnvironmentsRouteImport } from './routes/_app.environments'
 import { Route as AppDecisionsRouteImport } from './routes/_app.decisions'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppCoreRouteImport } from './routes/_app.core'
 import { Route as AppConnectorsRouteImport } from './routes/_app.connectors'
 import { Route as AppAuditRouteImport } from './routes/_app.audit'
 import { Route as AppWorkflowsWorkflowIdRouteImport } from './routes/_app.workflows.$workflowId'
@@ -98,6 +99,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCoreRoute = AppCoreRouteImport.update({
+  id: '/core',
+  path: '/core',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppConnectorsRoute = AppConnectorsRouteImport.update({
   id: '/connectors',
   path: '/connectors',
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/audit': typeof AppAuditRoute
   '/connectors': typeof AppConnectorsRoute
+  '/core': typeof AppCoreRoute
   '/dashboard': typeof AppDashboardRoute
   '/decisions': typeof AppDecisionsRoute
   '/environments': typeof AppEnvironmentsRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/audit': typeof AppAuditRoute
   '/connectors': typeof AppConnectorsRoute
+  '/core': typeof AppCoreRoute
   '/dashboard': typeof AppDashboardRoute
   '/decisions': typeof AppDecisionsRoute
   '/environments': typeof AppEnvironmentsRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/audit': typeof AppAuditRoute
   '/_app/connectors': typeof AppConnectorsRoute
+  '/_app/core': typeof AppCoreRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/decisions': typeof AppDecisionsRoute
   '/_app/environments': typeof AppEnvironmentsRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/audit'
     | '/connectors'
+    | '/core'
     | '/dashboard'
     | '/decisions'
     | '/environments'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/audit'
     | '/connectors'
+    | '/core'
     | '/dashboard'
     | '/decisions'
     | '/environments'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/audit'
     | '/_app/connectors'
+    | '/_app/core'
     | '/_app/dashboard'
     | '/_app/decisions'
     | '/_app/environments'
@@ -357,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/core': {
+      id: '/_app/core'
+      path: '/core'
+      fullPath: '/core'
+      preLoaderRoute: typeof AppCoreRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/connectors': {
       id: '/_app/connectors'
       path: '/connectors'
@@ -426,6 +445,7 @@ const AppWorkflowsRouteWithChildren = AppWorkflowsRoute._addFileChildren(
 interface AppRouteChildren {
   AppAuditRoute: typeof AppAuditRoute
   AppConnectorsRoute: typeof AppConnectorsRoute
+  AppCoreRoute: typeof AppCoreRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDecisionsRoute: typeof AppDecisionsRoute
   AppEnvironmentsRoute: typeof AppEnvironmentsRoute
@@ -442,6 +462,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAuditRoute: AppAuditRoute,
   AppConnectorsRoute: AppConnectorsRoute,
+  AppCoreRoute: AppCoreRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDecisionsRoute: AppDecisionsRoute,
   AppEnvironmentsRoute: AppEnvironmentsRoute,

@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Activity,
+  Cpu,
   Building2,
   FileStack,
   FolderKanban,
@@ -44,6 +45,7 @@ const groups: { label: string; items: Item[] }[] = [
       { to: "/secrets", label: "Secrets", icon: KeyRound, phase: "P2" },
       { to: "/connectors", label: "Connectors", icon: PlugZap, phase: "P2" },
       { to: "/workflows", label: "Workflows", icon: Workflow, phase: "P3" },
+      { to: "/core", label: "Core", icon: Cpu, phase: "P1" },
     ],
   },
   {
