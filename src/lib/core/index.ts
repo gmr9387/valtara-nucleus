@@ -9,6 +9,8 @@
 
 export * from "./types";
 export * from "./contracts";
+export * from "./services";
+export * from "./examples";
 export { evaluateRules } from "./evaluator";
 export type { EvaluatorOutput } from "./evaluator";
 export { calculateConfidence } from "./confidence";
@@ -95,15 +97,13 @@ export const CORE_MODULE_REGISTRY: readonly CoreModuleDescriptor[] = [
   {
     name: "contracts",
     layer: "decision-engine",
-    purpose:
-      "Strict TypeScript interfaces for Core requests, responses, and per-module results.",
+    purpose: "Strict TypeScript interfaces for Core requests, responses, and per-module results.",
     status: "Architecture Ready",
   },
   {
     name: "evaluator",
     layer: "decision-engine",
-    purpose:
-      "Rule execution, condition evaluation, rule firing, candidate generation.",
+    purpose: "Rule execution, condition evaluation, rule firing, candidate generation.",
     status: "Architecture Ready",
   },
   {
@@ -116,8 +116,7 @@ export const CORE_MODULE_REGISTRY: readonly CoreModuleDescriptor[] = [
   {
     name: "decisions",
     layer: "decision-engine",
-    purpose:
-      "Vote aggregation, priority weighting, tie breaking, final decision selection.",
+    purpose: "Vote aggregation, priority weighting, tie breaking, final decision selection.",
     status: "Architecture Ready",
   },
   {
@@ -129,15 +128,13 @@ export const CORE_MODULE_REGISTRY: readonly CoreModuleDescriptor[] = [
   {
     name: "governance",
     layer: "decision-engine",
-    purpose:
-      "Rule health, explainability, audit readiness, governance scoring.",
+    purpose: "Rule health, explainability, audit readiness, governance scoring.",
     status: "Architecture Ready",
   },
   {
     name: "replay",
     layer: "decision-engine",
-    purpose:
-      "Historical replay, diff generation, version comparison, drift detection.",
+    purpose: "Historical replay, diff generation, version comparison, drift detection.",
     status: "Architecture Ready",
   },
 ] as const;
