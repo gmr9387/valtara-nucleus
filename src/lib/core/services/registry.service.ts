@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { getCoreDbClient } from "@/lib/core/services/db";
 import type {
   ConnectorBindingRow,
   ConnectorCapabilityRow,
@@ -8,7 +8,9 @@ import type {
 } from "@/lib/queries";
 
 export async function listCredentialProviders(): Promise<CredentialProviderRow[]> {
-  const { data, error } = await supabase
+  const db = getCoreDbClient();
+
+  const { data, error } = await db
     .from("credential_providers")
     .select("*")
     .order("label", { ascending: true });
@@ -18,7 +20,9 @@ export async function listCredentialProviders(): Promise<CredentialProviderRow[]
 }
 
 export async function listConnectors(): Promise<ConnectorRow[]> {
-  const { data, error } = await supabase
+  const db = getCoreDbClient();
+
+  const { data, error } = await db
     .from("connectors")
     .select("*")
     .order("label", { ascending: true });
@@ -28,7 +32,9 @@ export async function listConnectors(): Promise<ConnectorRow[]> {
 }
 
 export async function listConnectorCapabilities(): Promise<ConnectorCapabilityRow[]> {
-  const { data, error } = await supabase
+  const db = getCoreDbClient();
+
+  const { data, error } = await db
     .from("connector_capabilities")
     .select("*")
     .order("capability_label", { ascending: true });
@@ -38,7 +44,9 @@ export async function listConnectorCapabilities(): Promise<ConnectorCapabilityRo
 }
 
 export async function listConnectorBindings(orgId: string): Promise<ConnectorBindingRow[]> {
-  const { data, error } = await supabase
+  const db = getCoreDbClient();
+
+  const { data, error } = await db
     .from("connector_bindings")
     .select("*")
     .eq("organization_id", orgId)
@@ -49,7 +57,9 @@ export async function listConnectorBindings(orgId: string): Promise<ConnectorBin
 }
 
 export async function listCredentials(orgId: string): Promise<CredentialRow[]> {
-  const { data, error } = await supabase
+  const db = getCoreDbClient();
+
+  const { data, error } = await db
     .from("credentials")
     .select("*")
     .eq("organization_id", orgId)

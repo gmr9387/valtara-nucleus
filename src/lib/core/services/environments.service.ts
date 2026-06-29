@@ -1,8 +1,10 @@
-import { supabase } from "@/integrations/supabase/client";
+import { getCoreDbClient } from "@/lib/core/services/db";
 import type { EnvironmentRow } from "@/lib/queries";
 
 export async function listEnvironmentsByOrg(orgId: string): Promise<EnvironmentRow[]> {
-  const { data: projects, error: projectsError } = await supabase
+  const db = getCoreDbClient();
+
+  const { data: projects, error: projectsError } = await db
     .from("projects")
     .select("id")
     .eq("organization_id", orgId);
@@ -12,7 +14,7 @@ export async function listEnvironmentsByOrg(orgId: string): Promise<EnvironmentR
   const projectIds = (projects ?? []).map((project) => project.id);
   if (projectIds.length === 0) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("environments")
     .select("id, project_id, name, env_type, created_by, created_at")
     .in("project_id", projectIds)

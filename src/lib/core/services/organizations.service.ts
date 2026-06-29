@@ -1,8 +1,10 @@
-import { supabase } from "@/integrations/supabase/client";
+import { getCoreDbClient } from "@/lib/core/services/db";
 import type { Organization } from "@/lib/queries";
 
 export async function listOrganizations(): Promise<Organization[]> {
-  const { data, error } = await supabase
+  const db = getCoreDbClient();
+
+  const { data, error } = await db
     .from("organizations")
     .select("*")
     .order("created_at", { ascending: true });
@@ -12,7 +14,9 @@ export async function listOrganizations(): Promise<Organization[]> {
 }
 
 export async function getOrganization(orgId: string): Promise<Organization | null> {
-  const { data, error } = await supabase
+  const db = getCoreDbClient();
+
+  const { data, error } = await db
     .from("organizations")
     .select("*")
     .eq("id", orgId)

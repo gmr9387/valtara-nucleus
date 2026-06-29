@@ -1,11 +1,13 @@
-import { supabase } from "@/integrations/supabase/client";
+import { getCoreDbClient } from "@/lib/core/services/db";
 import type { MembershipRow } from "@/lib/queries";
 
 export async function getMembership(args: {
   orgId: string;
   userId: string;
 }): Promise<MembershipRow | null> {
-  const { data, error } = await supabase
+  const db = getCoreDbClient();
+
+  const { data, error } = await db
     .from("organization_members")
     .select("id, organization_id, user_id, role, created_at")
     .eq("organization_id", args.orgId)
@@ -17,7 +19,9 @@ export async function getMembership(args: {
 }
 
 export async function listMemberships(orgId: string): Promise<MembershipRow[]> {
-  const { data, error } = await supabase
+  const db = getCoreDbClient();
+
+  const { data, error } = await db
     .from("organization_members")
     .select("id, organization_id, user_id, role, created_at")
     .eq("organization_id", orgId)

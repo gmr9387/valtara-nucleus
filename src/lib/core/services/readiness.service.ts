@@ -1,10 +1,11 @@
-import { supabase } from "@/integrations/supabase/client";
 import type { CoreReadinessResult } from "@/lib/core/services/contracts";
 import { getCoreDbClient } from "@/lib/core/services/db";
 import { evaluateCoreReadinessSignals } from "@/lib/core/services/readiness-evaluator";
 
 async function hasOrgSettings(orgId: string): Promise<boolean> {
-  const { data, error } = await supabase
+  const db = getCoreDbClient();
+
+  const { data, error } = await db
     .from("organizations")
     .select("id, name, slug, status")
     .eq("id", orgId)
@@ -16,7 +17,9 @@ async function hasOrgSettings(orgId: string): Promise<boolean> {
 }
 
 async function hasRequiredRoles(orgId: string): Promise<boolean> {
-  const { data, error } = await supabase
+  const db = getCoreDbClient();
+
+  const { data, error } = await db
     .from("organization_members")
     .select("role")
     .eq("organization_id", orgId)
@@ -40,7 +43,9 @@ async function hasEventContracts(): Promise<boolean> {
 }
 
 async function hasSecrets(orgId: string): Promise<boolean> {
-  const { count, error } = await supabase
+  const db = getCoreDbClient();
+
+  const { count, error } = await db
     .from("credentials")
     .select("id", { count: "exact", head: true })
     .eq("organization_id", orgId);
@@ -50,7 +55,9 @@ async function hasSecrets(orgId: string): Promise<boolean> {
 }
 
 async function environmentConfigSafe(orgId: string): Promise<boolean> {
-  const { data: projects, error: projectsError } = await supabase
+  const db = getCoreDbClient();
+
+  const { data: projects, error: projectsError } = await db
     .from("projects")
     .select("id")
     .eq("organization_id", orgId);
@@ -60,7 +67,7 @@ async function environmentConfigSafe(orgId: string): Promise<boolean> {
   const projectIds = (projects ?? []).map((project) => project.id);
   if (projectIds.length === 0) return true;
 
-  const { data: environments, error: environmentsError } = await supabase
+  const { data: environments, error: environmentsError } = await db
     .from("environments")
     .select("id, project_id, env_type")
     .in("project_id", projectIds)
@@ -70,7 +77,7 @@ async function environmentConfigSafe(orgId: string): Promise<boolean> {
 
   if ((environments?.length ?? 0) === 0) return true;
 
-  const { data: credentials, error: credentialsError } = await supabase
+  const { data: credentials, error: credentialsError } = await db
     .from("credentials")
     .select("environment_id, project_id")
     .eq("organization_id", orgId)
@@ -96,9 +103,10 @@ async function environmentConfigSafe(orgId: string): Promise<boolean> {
 }
 
 async function telemetryHealthy(orgId: string): Promise<boolean> {
+  const db = getCoreDbClient();
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  const { count: failures, error: failureError } = await supabase
+  const { count: failures, error: failureError } = await db
     .from("telemetry_events")
     .select("id", { count: "exact", head: true })
     .eq("organization_id", orgId)
@@ -108,7 +116,7 @@ async function telemetryHealthy(orgId: string): Promise<boolean> {
   if (failureError) throw failureError;
   if ((failures ?? 0) > 0) return false;
 
-  const { count: successSignals, error: successError } = await supabase
+  const { count: successSignals, error: successError } = await db
     .from("telemetry_events")
     .select("id", { count: "exact", head: true })
     .eq("organization_id", orgId)
