@@ -36,5 +36,80 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/lib/core/services/**/*"],
+    rules: {
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector:
+            "ImportDeclaration[source.value=/^@\\/lib\\/core\\/services\\/.*\\.service$/]",
+          message:
+            "Boundary rail: avoid deep imports from @/lib/core/services/*.service in consumers; import from @/lib/core/services instead.",
+        },
+        {
+          selector:
+            "ExportNamedDeclaration[source.value=/^@\\/lib\\/core\\/services\\/.*\\.service$/]",
+          message:
+            "Boundary rail: avoid re-exporting @/lib/core/services/*.service from consumers; re-export from @/lib/core/services only.",
+        },
+        {
+          selector:
+            "ExportAllDeclaration[source.value=/^@\\/lib\\/core\\/services\\/.*\\.service$/]",
+          message:
+            "Boundary rail: avoid wildcard re-export of @/lib/core/services/*.service from consumers; use @/lib/core/services.",
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/lib/core/index.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector: "ExportAllDeclaration[source.value='./examples']",
+          message:
+            "Boundary rail: do not expose product examples from Core public entrypoints.",
+        },
+        {
+          selector: "ExportNamedDeclaration[source.value='./examples']",
+          message:
+            "Boundary rail: do not expose product examples from Core public entrypoints.",
+        },
+        {
+          selector:
+            "ExportNamedDeclaration[source.value=/^\\.\\/(evaluator|confidence|decisions|trace|governance|replay)$/]",
+          message:
+            "Boundary rail: do not export Weaver/decision/governance modules from Core public entrypoints.",
+        },
+        {
+          selector:
+            "ExportAllDeclaration[source.value=/^\\.\\/(evaluator|confidence|decisions|trace|governance|replay)$/]",
+          message:
+            "Boundary rail: do not export Weaver/decision/governance modules from Core public entrypoints.",
+        },
+        {
+          selector:
+            "ImportDeclaration[source.value=/^\\.\\/(glue|runtime|workflow-execution|workflows)$/]",
+          message:
+            "Boundary rail: do not import Glue/runtime/workflow execution modules into Core public entrypoints.",
+        },
+        {
+          selector:
+            "ExportNamedDeclaration[source.value=/^\\.\\/(glue|runtime|workflow-execution|workflows)$/]",
+          message:
+            "Boundary rail: do not export Glue/runtime/workflow execution modules from Core public entrypoints.",
+        },
+        {
+          selector:
+            "ExportAllDeclaration[source.value=/^\\.\\/(glue|runtime|workflow-execution|workflows)$/]",
+          message:
+            "Boundary rail: do not export Glue/runtime/workflow execution modules from Core public entrypoints.",
+        },
+      ],
+    },
+  },
   eslintPluginPrettier,
 );
