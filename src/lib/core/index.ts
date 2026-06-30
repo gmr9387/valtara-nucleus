@@ -10,7 +10,6 @@
 export * from "./types";
 export * from "./contracts";
 export * from "./services";
-export * from "./examples";
 export { evaluateRules } from "./evaluator";
 export type { EvaluatorOutput } from "./evaluator";
 export { calculateConfidence } from "./confidence";

@@ -1,5 +1,4 @@
-import { appendAuditEvent } from "@/lib/core/services/audit-events.service";
-import { executeIdempotentCommand } from "@/lib/core/services/commands.service";
+import { appendAuditEvent, executeIdempotentCommand } from "@/lib/core/services";
 
 export async function dualPayExampleCall(args: {
   orgId: string;
