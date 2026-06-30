@@ -10,13 +10,6 @@
 export * from "./types";
 export * from "./contracts";
 export * from "./services";
-export { evaluateRules } from "./evaluator";
-export type { EvaluatorOutput } from "./evaluator";
-export { calculateConfidence } from "./confidence";
-export { resolveDecision } from "./decisions";
-export { generateTrace } from "./trace";
-export { evaluateGovernance } from "./governance";
-export { replayEvaluation } from "./replay";
 export {
   useOperationsReadiness,
   type OperationsReadiness,
