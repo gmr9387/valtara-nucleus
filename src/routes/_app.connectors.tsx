@@ -7,7 +7,7 @@ import { PageHeader, PageBody, EmptyState, StatusPill, MetricCard } from "@/comp
 import { Field, Th, Td, FieldStyles } from "./_app.organizations";
 import { HealthIndicator, type Health } from "@/components/HealthIndicator";
 import { useOrgStore } from "@/lib/org-store";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/use-auth";
 import { useMyOrgMembership, canManageOrg, useProjects, useEnvironments } from "@/lib/queries";
 import {
   useConnectors,

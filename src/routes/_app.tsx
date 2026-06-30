@@ -4,7 +4,7 @@ import { LogOut } from "lucide-react";
 
 import { AppSidebar } from "@/components/AppSidebar";
 import { OrgSwitcher } from "@/components/OrgSwitcher";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/use-auth";
 import { createCorrelationId, logAudit } from "@/lib/audit";
 import { useMyOrganizations } from "@/lib/queries";
 import { useOrgStore } from "@/lib/org-store";

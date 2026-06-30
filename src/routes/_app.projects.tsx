@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/use-auth";
 import { useProjects } from "@/lib/queries";
 import { useOrgStore } from "@/lib/org-store";
 import { PageHeader, PageBody, EmptyState, StatusDot } from "@/components/platform-ui";
