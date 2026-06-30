@@ -16,11 +16,7 @@ export async function listOrganizations(): Promise<Organization[]> {
 export async function getOrganization(orgId: string): Promise<Organization | null> {
   const db = getCoreDbClient();
 
-  const { data, error } = await db
-    .from("organizations")
-    .select("*")
-    .eq("id", orgId)
-    .maybeSingle();
+  const { data, error } = await db.from("organizations").select("*").eq("id", orgId).maybeSingle();
 
   if (error) throw error;
   return (data ?? null) as Organization | null;

@@ -17,10 +17,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { logTelemetryEvent } from "@/lib/telemetry";
-import type {
-  WorkflowRunStatus,
-  WorkflowStepStatus,
-} from "@/lib/schemas/workflows.schemas";
+import type { WorkflowRunStatus, WorkflowStepStatus } from "@/lib/schemas/workflows.schemas";
 
 const MODULE = "workflows";
 
@@ -115,13 +112,11 @@ export async function startWorkflow(args: StartWorkflowArgs): Promise<RunRecord>
     event_type: "workflow_started",
     payload: { version_id: args.version_id },
   });
-  await emitTelemetry(
-    args.organization_id,
-    "workflow_started",
-    "info",
-    `Run ${data.id} started`,
-    { workflow_id: args.workflow_id, version_id: args.version_id, run_id: data.id },
-  );
+  await emitTelemetry(args.organization_id, "workflow_started", "info", `Run ${data.id} started`, {
+    workflow_id: args.workflow_id,
+    version_id: args.version_id,
+    run_id: data.id,
+  });
 
   return data as RunRecord;
 }
@@ -180,13 +175,9 @@ export async function failWorkflow(
     event_type: "workflow_failed",
     payload: { message: error_payload.message },
   });
-  await emitTelemetry(
-    organization_id,
-    "workflow_failed",
-    "error",
-    error_payload.message,
-    { run_id },
-  );
+  await emitTelemetry(organization_id, "workflow_failed", "error", error_payload.message, {
+    run_id,
+  });
 }
 
 export async function cancelWorkflow(
@@ -341,13 +332,10 @@ export async function failStep(args: {
     event_type: "step_failed",
     payload: { step_key: args.step_key, message: args.error.message },
   });
-  await emitTelemetry(
-    ctx.organization_id,
-    "step_failed",
-    "error",
-    args.error.message,
-    { run_id: args.run_id, step_key: args.step_key },
-  );
+  await emitTelemetry(ctx.organization_id, "step_failed", "error", args.error.message, {
+    run_id: args.run_id,
+    step_key: args.step_key,
+  });
 }
 
 // ============================================================

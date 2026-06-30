@@ -43,8 +43,7 @@ export default tseslint.config(
       "no-restricted-syntax": [
         "warn",
         {
-          selector:
-            "ImportDeclaration[source.value=/^@\\/lib\\/core\\/services\\/.*\\.service$/]",
+          selector: "ImportDeclaration[source.value=/^@\\/lib\\/core\\/services\\/.*\\.service$/]",
           message:
             "Boundary rail: avoid deep imports from @/lib/core/services/*.service in consumers; import from @/lib/core/services instead.",
         },
@@ -70,13 +69,11 @@ export default tseslint.config(
         "warn",
         {
           selector: "ExportAllDeclaration[source.value='./examples']",
-          message:
-            "Boundary rail: do not expose product examples from Core public entrypoints.",
+          message: "Boundary rail: do not expose product examples from Core public entrypoints.",
         },
         {
           selector: "ExportNamedDeclaration[source.value='./examples']",
-          message:
-            "Boundary rail: do not expose product examples from Core public entrypoints.",
+          message: "Boundary rail: do not expose product examples from Core public entrypoints.",
         },
         {
           selector:
