@@ -5,33 +5,19 @@
  * No runtime logic. No behavior changes. Definitions only.
  */
 
-export type Severity =
-  | "info"
-  | "low"
-  | "medium"
-  | "high"
-  | "critical";
+export type Severity = "info" | "low" | "medium" | "high" | "critical";
 
-export type ConfidenceBand =
-  | "low"
-  | "medium"
-  | "high"
-  | "very_high";
+export type ConfidenceBand = "low" | "medium" | "high" | "very_high";
 
 export type EvaluationMode =
-  | "instant"
-  | "deep"
-  | "assisted"
-  | "live"
-  | "replay"
-  | "shadow"
-  | "dry_run";
+  "instant" | "deep" | "assisted" | "live" | "replay" | "shadow" | "dry_run";
 
 export type DecisionOutcome =
   | "approve"
   | "deny"
   | "review"
   | "escalate"
+  | "requires_approval"
   | "flag"
   | "request_info"
   | "unresolved";

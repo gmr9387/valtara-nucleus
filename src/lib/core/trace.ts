@@ -1,26 +1,31 @@
 /**
  * ValtariOS Core — Trace Generation
  *
- * Responsibilities (future home; no logic moved yet):
- *  - Rule trace (which rules ran, in what order)
- *  - Evaluation trace (inputs/outputs per rule)
- *  - Audit trace (who/when/what)
- *  - Replay trace (deterministic re-execution log)
- *
- * Status: Architecture Ready. Placeholder only.
+ * Emits a traceId and one TraceRecord per evaluated rule,
+ * capturing: which rule ran, whether it fired, its weight,
+ * and the human-readable reason string.
  */
 
 import type { TraceResult } from "./contracts";
-import type { RuleEvaluation } from "./types";
+import type { RuleEvaluation, TraceRecord } from "./types";
 
-export function generateTrace(
-  _evaluations: readonly RuleEvaluation[],
-): TraceResult {
-  return {
-    traceId: "",
+export function generateTrace(evaluations: readonly RuleEvaluation[]): TraceResult {
+  const traceId = crypto.randomUUID();
+  const now = new Date().toISOString();
 
-    evaluations: [],
+  const records: TraceRecord[] = evaluations.map((e) => ({
+    traceId,
+    step: `rule:${e.ruleId}`,
+    at: now,
+    detail: {
+      ruleName: e.ruleName,
+      ruleVersion: e.ruleVersion,
+      fired: e.fired,
+      weight: e.weight,
+      reason: e.reason,
+      evidenceRefs: e.evidenceRefs ?? [],
+    },
+  }));
 
-    records: [],
-  };
+  return { traceId, evaluations: [...evaluations], records };
 }

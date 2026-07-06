@@ -15,6 +15,7 @@ export type AuditAction =
   | "archive"
   | "restore"
   | "execute"
+  | "evaluate"
   | "approve"
   | "reject"
   | "rotate_secret"
@@ -103,5 +104,39 @@ export async function logMutationAudit(args: {
     before: args.before,
     after: args.after,
     correlation_id: args.correlation_id,
+  });
+}
+
+/**
+ * Structured audit record for Core evaluation events.
+ *
+ * Wraps logAudit with a typed payload specific to decision evaluations.
+ * Uses the browser Supabase client and will silently no-op when called
+ * from a context without an active session (e.g. M2M server paths).
+ * Server functions should use the admin client directly via Supabase insert.
+ *
+ * Exported so tests can mock it via vi.mock('@/lib/audit').
+ */
+export async function logCoreDecision(args: {
+  organizationId?: string | null;
+  callerIdentity: string;
+  traceId: string;
+  outcome: string;
+  confidenceScore: number;
+  correlationId?: string | null;
+}): Promise<void> {
+  await logAudit({
+    organization_id: args.organizationId,
+    module: "core",
+    entity_type: "evaluation",
+    entity_id: args.traceId,
+    action: "evaluate",
+    correlation_id: args.correlationId,
+    after: {
+      outcome: args.outcome,
+      confidence_score: args.confidenceScore,
+      caller_identity: args.callerIdentity,
+      trace_id: args.traceId,
+    },
   });
 }
