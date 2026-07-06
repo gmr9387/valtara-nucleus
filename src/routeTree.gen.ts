@@ -26,6 +26,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCoreRouteImport } from './routes/_app.core'
 import { Route as AppConnectorsRouteImport } from './routes/_app.connectors'
 import { Route as AppAuditRouteImport } from './routes/_app.audit'
+import { Route as ApiV0EvaluateRouteImport } from './routes/api/v0/evaluate'
 import { Route as AppWorkflowsWorkflowIdRouteImport } from './routes/_app.workflows.$workflowId'
 import { Route as AppWorkflowsRunsRunIdRouteImport } from './routes/_app.workflows.runs.$runId'
 import { Route as AppWorkflowsWorkflowIdRunsRouteImport } from './routes/_app.workflows.$workflowId.runs'
@@ -114,6 +115,11 @@ const AppAuditRoute = AppAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiV0EvaluateRoute = ApiV0EvaluateRouteImport.update({
+  id: '/api/v0/evaluate',
+  path: '/api/v0/evaluate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppWorkflowsWorkflowIdRoute = AppWorkflowsWorkflowIdRouteImport.update({
   id: '/$workflowId',
   path: '/$workflowId',
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/users': typeof AppUsersRoute
   '/workflows': typeof AppWorkflowsRouteWithChildren
   '/workflows/$workflowId': typeof AppWorkflowsWorkflowIdRouteWithChildren
+  '/api/v0/evaluate': typeof ApiV0EvaluateRoute
   '/workflows/$workflowId/runs': typeof AppWorkflowsWorkflowIdRunsRoute
   '/workflows/runs/$runId': typeof AppWorkflowsRunsRunIdRoute
 }
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/users': typeof AppUsersRoute
   '/workflows': typeof AppWorkflowsRouteWithChildren
   '/workflows/$workflowId': typeof AppWorkflowsWorkflowIdRouteWithChildren
+  '/api/v0/evaluate': typeof ApiV0EvaluateRoute
   '/workflows/$workflowId/runs': typeof AppWorkflowsWorkflowIdRunsRoute
   '/workflows/runs/$runId': typeof AppWorkflowsRunsRunIdRoute
 }
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/_app/users': typeof AppUsersRoute
   '/_app/workflows': typeof AppWorkflowsRouteWithChildren
   '/_app/workflows/$workflowId': typeof AppWorkflowsWorkflowIdRouteWithChildren
+  '/api/v0/evaluate': typeof ApiV0EvaluateRoute
   '/_app/workflows/$workflowId/runs': typeof AppWorkflowsWorkflowIdRunsRoute
   '/_app/workflows/runs/$runId': typeof AppWorkflowsRunsRunIdRoute
 }
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/workflows'
     | '/workflows/$workflowId'
+    | '/api/v0/evaluate'
     | '/workflows/$workflowId/runs'
     | '/workflows/runs/$runId'
   fileRoutesByTo: FileRoutesByTo
@@ -237,6 +247,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/workflows'
     | '/workflows/$workflowId'
+    | '/api/v0/evaluate'
     | '/workflows/$workflowId/runs'
     | '/workflows/runs/$runId'
   id:
@@ -259,6 +270,7 @@ export interface FileRouteTypes {
     | '/_app/users'
     | '/_app/workflows'
     | '/_app/workflows/$workflowId'
+    | '/api/v0/evaluate'
     | '/_app/workflows/$workflowId/runs'
     | '/_app/workflows/runs/$runId'
   fileRoutesById: FileRoutesById
@@ -267,6 +279,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiV0EvaluateRoute: typeof ApiV0EvaluateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -390,6 +403,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/v0/evaluate': {
+      id: '/api/v0/evaluate'
+      path: '/api/v0/evaluate'
+      fullPath: '/api/v0/evaluate'
+      preLoaderRoute: typeof ApiV0EvaluateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/workflows/$workflowId': {
       id: '/_app/workflows/$workflowId'
       path: '/$workflowId'
@@ -482,6 +502,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiV0EvaluateRoute: ApiV0EvaluateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -8,7 +8,95 @@
 
 ---
 
-## What was built
+## Core Stable API Route Sprint
+
+**Sprint goal:** Make Core's first evaluation endpoint stable and callable by DualPay
+without relying on TanStack Start content-addressed /_server URLs.
+
+**Completed:** 2026-07-06
+
+---
+
+## Stable DualPay → Core Call Contract
+
+DualPay sends a POST request to the following stable endpoint:
+
+```
+POST /api/v0/evaluate
+Content-Type: application/json
+X-Core-Api-Key: <CORE_API_KEY>
+```
+
+Request body (CoreEvaluationRequest):
+```json
+{
+  "organizationId": "org-dualpay-001",
+  "subjectId": "claim-abc-9999",
+  "mode": "instant",
+  "facts": {
+    "domain": "claims",
+    "event": "appeal.submit",
+    "amount": 30000
+  },
+  "correlationId": "corr-001"
+}
+```
+
+Response (CoreEvaluationResponse):
+```json
+{
+  "decision": {
+    "decision": {
+      "outcome": "requires_approval",
+      "confidence": 0.9,
+      "confidenceBand": "very_high",
+      "severity": "high"
+    },
+    "candidates": [...]
+  },
+  "confidence": {
+    "score": 0.9,
+    "band": "very_high",
+    "missingFacts": []
+  },
+  "trace": {
+    "traceId": "<uuid>",
+    "evaluations": [...],
+    "records": [...]
+  },
+  "governance": {
+    "score": 1,
+    "explainable": true,
+    "auditReady": true,
+    "findings": []
+  }
+}
+```
+
+Error responses:
+- 401 Unauthorized — missing or invalid X-Core-Api-Key
+- 400 Bad Request — missing required fields or invalid mode
+- 400 Bad Request — body is not valid JSON
+
+---
+
+## What was built (Stable API Route Sprint)
+
+One stable HTTP endpoint at /api/v0/evaluate implemented as a TanStack Start
+server route with a fixed, content-addressed-free URL. The endpoint:
+
+- Accepts CoreEvaluationRequest validated with Zod
+- Requires X-Core-Api-Key header matched against CORE_API_KEY env var
+- Calls the existing runEvaluation() pipeline without changes
+- Returns CoreEvaluationResponse as JSON
+- Writes audit row to audit_events via Supabase service-role client
+- Writes telemetry row to telemetry_events via Supabase service-role client
+- Returns clear 4xx errors for bad auth and bad payload
+- Is fully testable via the pure handleEvaluateRequest() function
+
+---
+
+## What was built (Core v0 Motion Sprint)
 
 One real policy decision rule, a full evaluation pipeline, and an authenticated server
 function that DualPay (or any service caller) can invoke to receive a traceable, auditable
@@ -65,9 +153,33 @@ Both endpoints are compiled by TanStack Start and registered under the /_server/
 with content-addressable URLs. The caller uses the @tanstack/react-start client to call
 them, or constructs the raw HTTP request with the correct path.
 
+See also: POST /api/v0/evaluate — the stable, content-address-free endpoint added in
+the Stable API Route Sprint (above). This route is the preferred DualPay integration
+target going forward.
+
 ---
 
-## Files changed
+## Files changed (Stable API Route Sprint)
+
+src/lib/core/api/evaluate-handler.ts — New file. Pure handleEvaluateRequest() handler
+function. Accepts a Request, validates auth and payload, calls runEvaluation(), and returns
+a Response. Injectable IO for tests bypasses Supabase.
+
+src/routes/api/v0/evaluate.ts — New file. TanStack Start server route that registers the
+stable /api/v0/evaluate path and delegates to handleEvaluateRequest.
+
+src/routeTree.gen.ts — Updated to register the new /api/v0/evaluate route.
+
+src/lib/core/__tests__/api-route.test.ts — New file. 20 test cases covering: valid API key
+returns 200, invalid/missing key returns 401, DualPay payload returns requires_approval,
+response shape (traceId, decision, confidence, governance), IO invocation, and 400 for
+bad payloads.
+
+docs/STATUS.md — This file.
+
+---
+
+## Files changed (Core v0 Motion Sprint)
 
 src/lib/core/types.ts — Added "requires_approval" to DecisionOutcome union type.
 
@@ -135,5 +247,6 @@ governance — Active (auditReady flag)
 replay — Architecture Ready (not yet implemented)
 
 Integration surface:
-DualPay to Core — Active (M2M server function, X-Core-Api-Key auth)
+DualPay to Core — Active (stable POST /api/v0/evaluate, X-Core-Api-Key auth)
+DualPay to Core (legacy) — Active (M2M server function at /_server/<hash>)
 Core to Glue — Not started (Glue API surface required first)
