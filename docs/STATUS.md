@@ -401,3 +401,98 @@ Integration surface:
 DualPay to Core — Active (stable POST /api/v0/evaluate, X-Core-Api-Key auth)
 DualPay to Core (legacy) — Active (M2M server function at /_server/<hash>)
 Core to Glue — Active (stable POST /api/v0/workflows/execute, X-Glue-Api-Key auth)
+
+---
+
+## Core → Glue Dispatch Sprint
+
+**Sprint goal:** When Core returns `requires_approval`, automatically dispatch a pinned workflow run to Glue.
+
+**Completed:** 2026-07-06
+
+---
+
+## Dispatch behaviour
+
+When `runEvaluation()` resolves `decision.outcome === "requires_approval"`, Core calls
+`io.dispatchGlueWorkflow()` (awaited, before returning). The dispatch is best-effort:
+if it rejects or returns `status="failed"`, the Core response is still returned normally.
+The dispatch result is included in the response envelope as `dispatch?`.
+
+Outcomes that do NOT trigger dispatch: `approve`, `deny`, `review`, `escalate`, `flag`,
+`request_info`, `unresolved` — only `requires_approval` triggers dispatch.
+
+The `correlationId` from the inbound Core request is forwarded to Glue unchanged.
+When no `correlationId` is supplied, the evaluation `traceId` is used as a stable
+idempotency key so Glue never receives a duplicate dispatch for the same evaluation.
+
+---
+
+## Env vars (Core dispatch)
+
+| Var                      | Required | Description                                          |
+| ------------------------ | -------- | ---------------------------------------------------- |
+| GLUE_EXECUTE_URL         | Yes      | Full URL of the Glue execute endpoint                |
+| GLUE_API_KEY             | Yes      | X-Glue-Api-Key secret                                |
+| GLUE_WORKFLOW_KEY        | Yes      | Workflow name / key to execute (e.g. approval-workflow) |
+| GLUE_WORKFLOW_VERSION_ID | No       | Pinned workflow version UUID (preferred)             |
+| GLUE_WORKFLOW_VERSION    | No       | Pinned workflow version integer (fallback)           |
+
+If any of `GLUE_EXECUTE_URL`, `GLUE_API_KEY`, or `GLUE_WORKFLOW_KEY` is absent, dispatch
+is skipped with `status="skipped"` and the Core response is unaffected.
+
+---
+
+## Audit / telemetry
+
+Both `writeAudit` and `writeTelemetry` now receive the `dispatch` result and record
+`dispatch_status` and `dispatch_run_id` in their respective `after_json` /
+`attributes_json` payloads, so every audit and telemetry row reflects whether a Glue
+workflow was dispatched and which `runId` was returned.
+
+---
+
+## Files changed (Core → Glue Dispatch Sprint)
+
+`src/lib/core/glue-dispatch.ts` — New file. Pure `callGlueExecute()` function.
+Takes an injectable `fetchFn` for unit-testability. Never throws — always resolves to a
+`GlueDispatchResult` with `status: "dispatched" | "failed" | "skipped"`.
+
+`src/lib/core/contracts.ts` — Added `dispatch?: GlueDispatchResult` to
+`CoreEvaluationResponse`. Imported `GlueDispatchResult` type.
+
+`src/lib/core/engine.ts` — Extended `CoreEvaluationIO` with optional
+`dispatchGlueWorkflow` method. `runEvaluation()` now calls dispatch when
+`outcome === "requires_approval"`, captures the result, and includes it in the response
+and in the audit/telemetry write args.
+
+`src/lib/core/api/evaluate-handler.ts` — Implemented `dispatchGlueWorkflow` in `buildIO()`.
+Reads `GLUE_EXECUTE_URL`, `GLUE_API_KEY`, `GLUE_WORKFLOW_KEY`, `GLUE_WORKFLOW_VERSION_ID`,
+`GLUE_WORKFLOW_VERSION` from env. Returns `status="skipped"` if env is not configured.
+Audit and telemetry payloads now include `dispatch_status` and `dispatch_run_id`.
+
+`src/lib/core/__tests__/engine.test.ts` — Added 14 new tests across 4 suites (38 total):
+- Dispatch triggered for `requires_approval` (org, subject, correlationId, payload forwarded)
+- Dispatch NOT triggered for non-`requires_approval` outcomes
+- Glue failure is best-effort (Core resolves, `dispatch.status="failed"`)
+- Dispatch silently skipped when `dispatchGlueWorkflow` is absent from IO
+
+`src/lib/core/__tests__/glue-dispatch.test.ts` — New file. 9 tests covering:
+- Successful dispatch (201 and idempotent 200)
+- `X-Glue-Api-Key` header sent
+- `correlationId` preserved in body
+- `workflowVersionId` UUID vs `workflowVersion` integer selector
+- Network error → `status="failed"`
+- Non-2xx HTTP (401, 503) → `status="failed"` with `httpStatus`
+
+`docs/STATUS.md` — This file.
+
+---
+
+## Module status after this sprint
+
+Integration surface:
+DualPay to Core — Active (stable POST /api/v0/evaluate, X-Core-Api-Key auth)
+DualPay to Core (legacy) — Active (M2M server function at /_server/<hash>)
+Core to Glue — Active (stable POST /api/v0/workflows/execute, X-Glue-Api-Key auth)
+Core → Glue dispatch — Active (requires_approval triggers best-effort dispatch)

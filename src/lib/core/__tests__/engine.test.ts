@@ -64,17 +64,23 @@ function makeIO(overrides?: Partial<CoreEvaluationIO>): {
   io: CoreEvaluationIO;
   writeAudit: ReturnType<typeof vi.fn>;
   writeTelemetry: ReturnType<typeof vi.fn>;
+  dispatchGlueWorkflow: ReturnType<typeof vi.fn>;
 } {
   const writeAudit = vi.fn().mockResolvedValue(undefined);
   const writeTelemetry = vi.fn().mockResolvedValue(undefined);
+  const dispatchGlueWorkflow = vi
+    .fn()
+    .mockResolvedValue({ status: "dispatched", runId: "run-dispatch-001" });
   return {
     io: {
       writeAudit,
       writeTelemetry,
+      dispatchGlueWorkflow,
       ...overrides,
     },
     writeAudit,
     writeTelemetry,
+    dispatchGlueWorkflow,
   };
 }
 
@@ -278,5 +284,160 @@ describe("evaluateGovernance", () => {
     const trace = generateTrace(evaluations);
     const result = evaluateGovernance(trace);
     expect(result.auditReady).toBe(true);
+  });
+});
+
+// ── Test 6: Glue dispatch — requires_approval triggers dispatch ───────────
+
+describe("runEvaluation — Glue dispatch on requires_approval", () => {
+  it("calls dispatchGlueWorkflow when outcome is requires_approval", async () => {
+    const { io, dispatchGlueWorkflow } = makeIO();
+    await runEvaluation(APPEAL_REQUEST, "service:dualpay", io);
+
+    // Dispatch is awaited before returning, so no micro-task flush needed.
+    expect(dispatchGlueWorkflow).toHaveBeenCalledOnce();
+  });
+
+  it("passes organizationId and subjectId to dispatchGlueWorkflow", async () => {
+    const { io, dispatchGlueWorkflow } = makeIO();
+    await runEvaluation(APPEAL_REQUEST, "service:dualpay", io);
+
+    expect(dispatchGlueWorkflow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: APPEAL_REQUEST.organizationId,
+        subjectId: APPEAL_REQUEST.subjectId,
+      }),
+    );
+  });
+
+  it("uses the correlationId from the request", async () => {
+    const { io, dispatchGlueWorkflow } = makeIO();
+    await runEvaluation(APPEAL_REQUEST, "service:dualpay", io);
+
+    expect(dispatchGlueWorkflow).toHaveBeenCalledWith(
+      expect.objectContaining({ correlationId: APPEAL_REQUEST.correlationId }),
+    );
+  });
+
+  it("falls back to traceId when correlationId is absent", async () => {
+    const { correlationId: _c, ...requestWithoutCorr } = APPEAL_REQUEST;
+    const { io, dispatchGlueWorkflow } = makeIO();
+    const response = await runEvaluation(
+      { ...requestWithoutCorr, correlationId: undefined },
+      "service:dualpay",
+      io,
+    );
+
+    expect(dispatchGlueWorkflow).toHaveBeenCalledWith(
+      expect.objectContaining({ correlationId: response.trace.traceId }),
+    );
+  });
+
+  it("includes dispatch result in response envelope", async () => {
+    const { io } = makeIO();
+    const response = await runEvaluation(APPEAL_REQUEST, "service:dualpay", io);
+
+    expect(response.dispatch).toBeDefined();
+    expect(response.dispatch?.status).toBe("dispatched");
+    expect(response.dispatch?.runId).toBe("run-dispatch-001");
+  });
+
+  it("passes facts as payload to dispatchGlueWorkflow", async () => {
+    const { io, dispatchGlueWorkflow } = makeIO();
+    await runEvaluation(APPEAL_REQUEST, "service:dualpay", io);
+
+    expect(dispatchGlueWorkflow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          domain: "claims",
+          event: "appeal.submit",
+          amount: 30_000,
+        }),
+      }),
+    );
+  });
+});
+
+// ── Test 7: Glue dispatch — approve does NOT trigger dispatch ────────────────
+
+describe("runEvaluation — Glue dispatch skipped for non-requires_approval", () => {
+  it("does NOT call dispatchGlueWorkflow when outcome is not requires_approval (low amount)", async () => {
+    const { io, dispatchGlueWorkflow } = makeIO();
+    await runEvaluation(LOW_AMOUNT_REQUEST, "service:dualpay", io);
+
+    // LOW_AMOUNT_REQUEST fires no rules → outcome = "unresolved"
+    expect(dispatchGlueWorkflow).not.toHaveBeenCalled();
+  });
+
+  it("does NOT call dispatchGlueWorkflow for a non-appeal event", async () => {
+    const { io, dispatchGlueWorkflow } = makeIO();
+    await runEvaluation(NON_APPEAL_REQUEST, "service:dualpay", io);
+
+    expect(dispatchGlueWorkflow).not.toHaveBeenCalled();
+  });
+
+  it("dispatch field is undefined in the response when no dispatch occurred", async () => {
+    const { io } = makeIO();
+    const response = await runEvaluation(LOW_AMOUNT_REQUEST, "service:dualpay", io);
+
+    expect(response.dispatch).toBeUndefined();
+  });
+});
+
+// ── Test 8: Glue failure does not fail Core response ────────────────────────
+
+describe("runEvaluation — Glue dispatch failure is best-effort", () => {
+  it("still resolves successfully when dispatchGlueWorkflow rejects", async () => {
+    const { io } = makeIO({
+      dispatchGlueWorkflow: vi.fn().mockRejectedValue(new Error("Glue is down")),
+    });
+
+    await expect(runEvaluation(APPEAL_REQUEST, "service:dualpay", io)).resolves.toBeDefined();
+  });
+
+  it("sets dispatch.status = 'failed' when dispatchGlueWorkflow rejects", async () => {
+    const { io } = makeIO({
+      dispatchGlueWorkflow: vi.fn().mockRejectedValue(new Error("Glue is down")),
+    });
+
+    const response = await runEvaluation(APPEAL_REQUEST, "service:dualpay", io);
+    expect(response.dispatch?.status).toBe("failed");
+    expect(response.dispatch?.error).toContain("Glue is down");
+  });
+
+  it("still resolves successfully when dispatchGlueWorkflow returns status='failed'", async () => {
+    const { io } = makeIO({
+      dispatchGlueWorkflow: vi.fn().mockResolvedValue({ status: "failed", error: "HTTP 503" }),
+    });
+
+    const response = await runEvaluation(APPEAL_REQUEST, "service:dualpay", io);
+    expect(response.dispatch?.status).toBe("failed");
+    expect(response.decision.decision.outcome).toBe("requires_approval");
+  });
+
+  it("dispatch status 'skipped' does not affect the decision outcome", async () => {
+    const { io } = makeIO({
+      dispatchGlueWorkflow: vi.fn().mockResolvedValue({ status: "skipped" }),
+    });
+
+    const response = await runEvaluation(APPEAL_REQUEST, "service:dualpay", io);
+    expect(response.decision.decision.outcome).toBe("requires_approval");
+    expect(response.dispatch?.status).toBe("skipped");
+  });
+});
+
+// ── Test 9: No dispatchGlueWorkflow in IO — dispatch is silently skipped ────
+
+describe("runEvaluation — dispatch omitted when IO has no dispatchGlueWorkflow", () => {
+  it("resolves without dispatch field when dispatchGlueWorkflow is not in IO", async () => {
+    const io: CoreEvaluationIO = {
+      writeAudit: vi.fn().mockResolvedValue(undefined),
+      writeTelemetry: vi.fn().mockResolvedValue(undefined),
+      // No dispatchGlueWorkflow
+    };
+
+    const response = await runEvaluation(APPEAL_REQUEST, "service:dualpay", io);
+    expect(response.dispatch).toBeUndefined();
+    expect(response.decision.decision.outcome).toBe("requires_approval");
   });
 });

@@ -15,6 +15,7 @@ import type {
   Severity,
   TraceRecord,
 } from "./types";
+import type { GlueDispatchResult } from "./glue-dispatch";
 
 export interface CoreEvaluationRequest {
   readonly organizationId: string;
@@ -38,6 +39,9 @@ export interface CoreEvaluationResponse {
   readonly trace: TraceResult;
 
   readonly governance: GovernanceResult;
+
+  /** Best-effort Glue dispatch result. Present only when a dispatch was attempted. */
+  readonly dispatch?: GlueDispatchResult;
 }
 
 export interface DecisionResult {

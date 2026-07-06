@@ -20,6 +20,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { runEvaluation, type CoreEvaluationIO } from "@/lib/core/engine";
 import { validateCoreApiKey, CORE_API_KEY_HEADER, CORE_CALLER_SERVICE } from "@/lib/core/m2m-auth";
+import { callGlueExecute } from "@/lib/core/glue-dispatch";
 
 // ── Input schema ─────────────────────────────────────────────────────────────
 
@@ -61,6 +62,7 @@ function buildIO(adminClient: ReturnType<typeof makeAdminClient>): CoreEvaluatio
       organizationId,
       correlationId,
       confidenceScore,
+      dispatch,
     }) {
       try {
         await adminClient.from("audit_events").insert({
@@ -77,6 +79,8 @@ function buildIO(adminClient: ReturnType<typeof makeAdminClient>): CoreEvaluatio
             confidence_score: confidenceScore,
             caller_identity: callerIdentity,
             trace_id: traceId,
+            dispatch_status: dispatch?.status ?? null,
+            dispatch_run_id: dispatch?.runId ?? null,
           } as never,
         });
       } catch (err) {
@@ -84,7 +88,7 @@ function buildIO(adminClient: ReturnType<typeof makeAdminClient>): CoreEvaluatio
       }
     },
 
-    async writeTelemetry({ traceId, module, durationMs, outcome, organizationId }) {
+    async writeTelemetry({ traceId, module, durationMs, outcome, organizationId, dispatch }) {
       try {
         await adminClient.from("telemetry_events").insert({
           organization_id: organizationId ?? null,
@@ -100,11 +104,41 @@ function buildIO(adminClient: ReturnType<typeof makeAdminClient>): CoreEvaluatio
             outcome,
             duration_ms: durationMs,
             trace_id: traceId,
+            dispatch_status: dispatch?.status ?? null,
+            dispatch_run_id: dispatch?.runId ?? null,
           } as never,
         });
       } catch (err) {
         console.warn("[core:api:evaluate] telemetry write failed", err);
       }
+    },
+
+    async dispatchGlueWorkflow({ organizationId, subjectId, correlationId, payload }) {
+      const executeUrl = process.env.GLUE_EXECUTE_URL;
+      const apiKey = process.env.GLUE_API_KEY;
+      const workflowKey = process.env.GLUE_WORKFLOW_KEY;
+      const workflowVersionId = process.env.GLUE_WORKFLOW_VERSION_ID;
+      const workflowVersionRaw = process.env.GLUE_WORKFLOW_VERSION;
+
+      // If the required env vars are not configured, skip dispatch silently.
+      if (!executeUrl || !apiKey || !workflowKey) {
+        return { status: "skipped" as const, error: "Glue dispatch not configured" };
+      }
+
+      const workflowVersion =
+        !workflowVersionId && workflowVersionRaw ? parseInt(workflowVersionRaw, 10) : undefined;
+
+      return callGlueExecute({
+        executeUrl,
+        apiKey,
+        workflowKey,
+        workflowVersionId: workflowVersionId || undefined,
+        workflowVersion,
+        organizationId,
+        subjectId,
+        correlationId,
+        payload,
+      });
     },
   };
 }

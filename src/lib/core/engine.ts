@@ -17,6 +17,7 @@
  */
 
 import type { CoreEvaluationRequest, CoreEvaluationResponse } from "./contracts";
+import type { GlueDispatchResult } from "./glue-dispatch";
 import { evaluateRules } from "./evaluator";
 import { calculateConfidence } from "./confidence";
 import { resolveDecision } from "./decisions";
@@ -31,6 +32,7 @@ export interface CoreEvaluationIO {
     organizationId: string | null | undefined;
     correlationId: string | null | undefined;
     confidenceScore: number;
+    dispatch?: GlueDispatchResult;
   }) => Promise<void>;
   writeTelemetry: (args: {
     traceId: string;
@@ -38,7 +40,18 @@ export interface CoreEvaluationIO {
     durationMs: number;
     outcome: string;
     organizationId: string | null | undefined;
+    dispatch?: GlueDispatchResult;
   }) => Promise<void>;
+  /**
+   * Best-effort Glue workflow dispatch. Called only when outcome = "requires_approval".
+   * Optional — if not provided, dispatch is skipped.
+   */
+  dispatchGlueWorkflow?: (args: {
+    organizationId: string;
+    subjectId: string;
+    correlationId: string;
+    payload: Record<string, unknown>;
+  }) => Promise<GlueDispatchResult>;
 }
 
 export async function runEvaluation(
@@ -56,6 +69,28 @@ export async function runEvaluation(
 
   const durationMs = Date.now() - t0;
 
+  // ── Best-effort Glue dispatch ─────────────────────────────────────────────
+  // Only triggered for requires_approval. Never throws into caller.
+  let dispatch: GlueDispatchResult | undefined;
+  if (decisionResult.decision.outcome === "requires_approval" && io.dispatchGlueWorkflow) {
+    dispatch = await io
+      .dispatchGlueWorkflow({
+        organizationId: request.organizationId,
+        subjectId: request.subjectId,
+        // Fall back to traceId when the caller did not supply a correlationId,
+        // so Glue always has a stable idempotency key.
+        correlationId: request.correlationId ?? trace.traceId,
+        payload: { ...(request.facts as Record<string, unknown>) },
+      })
+      .catch((err: unknown) => {
+        const error = `dispatchGlueWorkflow threw: ${String(err)}`;
+        if (typeof process !== "undefined" && process.env.NODE_ENV !== "test") {
+          console.warn("[core:engine] Glue dispatch threw", err);
+        }
+        return { status: "failed" as const, error };
+      });
+  }
+
   // Best-effort I/O — intentionally non-blocking; never throws into caller.
   void io
     .writeAudit({
@@ -65,6 +100,7 @@ export async function runEvaluation(
       organizationId: request.organizationId,
       correlationId: request.correlationId,
       confidenceScore: confidence.score,
+      dispatch,
     })
     .catch((err: unknown) => {
       if (typeof process !== "undefined" && process.env.NODE_ENV !== "test") {
@@ -79,6 +115,7 @@ export async function runEvaluation(
       durationMs,
       outcome: decisionResult.decision.outcome,
       organizationId: request.organizationId,
+      dispatch,
     })
     .catch((err: unknown) => {
       if (typeof process !== "undefined" && process.env.NODE_ENV !== "test") {
@@ -91,5 +128,6 @@ export async function runEvaluation(
     confidence,
     trace,
     governance,
+    dispatch,
   };
 }
