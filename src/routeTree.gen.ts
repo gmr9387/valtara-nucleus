@@ -28,6 +28,7 @@ import { Route as AppConnectorsRouteImport } from './routes/_app.connectors'
 import { Route as AppAuditRouteImport } from './routes/_app.audit'
 import { Route as ApiV0EvaluateRouteImport } from './routes/api/v0/evaluate'
 import { Route as AppWorkflowsWorkflowIdRouteImport } from './routes/_app.workflows.$workflowId'
+import { Route as ApiV0WorkflowsExecuteRouteImport } from './routes/api/v0/workflows/execute'
 import { Route as AppWorkflowsRunsRunIdRouteImport } from './routes/_app.workflows.runs.$runId'
 import { Route as AppWorkflowsWorkflowIdRunsRouteImport } from './routes/_app.workflows.$workflowId.runs'
 
@@ -125,6 +126,11 @@ const AppWorkflowsWorkflowIdRoute = AppWorkflowsWorkflowIdRouteImport.update({
   path: '/$workflowId',
   getParentRoute: () => AppWorkflowsRoute,
 } as any)
+const ApiV0WorkflowsExecuteRoute = ApiV0WorkflowsExecuteRouteImport.update({
+  id: '/api/v0/workflows/execute',
+  path: '/api/v0/workflows/execute',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppWorkflowsRunsRunIdRoute = AppWorkflowsRunsRunIdRouteImport.update({
   id: '/runs/$runId',
   path: '/runs/$runId',
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/api/v0/evaluate': typeof ApiV0EvaluateRoute
   '/workflows/$workflowId/runs': typeof AppWorkflowsWorkflowIdRunsRoute
   '/workflows/runs/$runId': typeof AppWorkflowsRunsRunIdRoute
+  '/api/v0/workflows/execute': typeof ApiV0WorkflowsExecuteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/api/v0/evaluate': typeof ApiV0EvaluateRoute
   '/workflows/$workflowId/runs': typeof AppWorkflowsWorkflowIdRunsRoute
   '/workflows/runs/$runId': typeof AppWorkflowsRunsRunIdRoute
+  '/api/v0/workflows/execute': typeof ApiV0WorkflowsExecuteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   '/api/v0/evaluate': typeof ApiV0EvaluateRoute
   '/_app/workflows/$workflowId/runs': typeof AppWorkflowsWorkflowIdRunsRoute
   '/_app/workflows/runs/$runId': typeof AppWorkflowsRunsRunIdRoute
+  '/api/v0/workflows/execute': typeof ApiV0WorkflowsExecuteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/api/v0/evaluate'
     | '/workflows/$workflowId/runs'
     | '/workflows/runs/$runId'
+    | '/api/v0/workflows/execute'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/api/v0/evaluate'
     | '/workflows/$workflowId/runs'
     | '/workflows/runs/$runId'
+    | '/api/v0/workflows/execute'
   id:
     | '__root__'
     | '/'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/api/v0/evaluate'
     | '/_app/workflows/$workflowId/runs'
     | '/_app/workflows/runs/$runId'
+    | '/api/v0/workflows/execute'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -280,6 +292,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   ApiV0EvaluateRoute: typeof ApiV0EvaluateRoute
+  ApiV0WorkflowsExecuteRoute: typeof ApiV0WorkflowsExecuteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -417,6 +430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWorkflowsWorkflowIdRouteImport
       parentRoute: typeof AppWorkflowsRoute
     }
+    '/api/v0/workflows/execute': {
+      id: '/api/v0/workflows/execute'
+      path: '/api/v0/workflows/execute'
+      fullPath: '/api/v0/workflows/execute'
+      preLoaderRoute: typeof ApiV0WorkflowsExecuteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/workflows/runs/$runId': {
       id: '/_app/workflows/runs/$runId'
       path: '/runs/$runId'
@@ -503,6 +523,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   ApiV0EvaluateRoute: ApiV0EvaluateRoute,
+  ApiV0WorkflowsExecuteRoute: ApiV0WorkflowsExecuteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

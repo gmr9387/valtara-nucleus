@@ -225,11 +225,106 @@ docs/STATUS.md — This file.
 
 ---
 
-## What is not built yet (Core to Glue)
+## Glue Inbound API Surface Sprint
 
-The Core to Glue integration requires Glue to expose a stable API surface. Until Glue
-has a callable endpoint, Core cannot dispatch workflow execution commands to it. This
-remains the next sprint blocker once Glue is available.
+**Sprint goal:** Expose a stable callable Glue workflow execution endpoint that Core can call after a `requires_approval` decision.
+
+**Completed:** 2026-07-06
+
+---
+
+## Core → Glue Call Contract
+
+Core sends a POST request to the following stable endpoint after a `requires_approval` decision:
+
+```
+POST /api/v0/workflows/execute
+Content-Type: application/json
+X-Glue-Api-Key: <GLUE_API_KEY>
+```
+
+Request body (GlueExecuteRequest):
+```json
+{
+  "organizationId": "org-nucleus-001",
+  "workflowKey": "approval-workflow",
+  "workflowVersionId": "<uuid>",
+  "subjectId": "claim-xyz-100",
+  "correlationId": "corr-core-001",
+  "payload": {
+    "claimId": "xyz-100",
+    "amount": 30000
+  }
+}
+```
+
+Either `workflowVersionId` (UUID) or `workflowVersion` (integer) must be provided to pin the exact version.
+
+Response (GlueExecuteResponse — 201 Created):
+```json
+{
+  "runId": "<uuid>",
+  "workflowVersionId": "<uuid>",
+  "status": "pending",
+  "correlationId": "corr-core-001"
+}
+```
+
+Idempotency: sending the same `correlationId` for the same `organizationId` returns the existing run with HTTP 200 instead of creating a duplicate.
+
+Error responses:
+- 401 Unauthorized — missing or invalid X-Glue-Api-Key
+- 400 Bad Request — missing required fields, no version selector, or invalid JSON
+- 404 Not Found — workflow not found/archived for the given org, or version not published
+
+---
+
+## What was built (Glue Inbound API Surface Sprint)
+
+One stable HTTP endpoint at /api/v0/workflows/execute implemented as a TanStack Start
+server route with a fixed, content-addressed-free URL. The endpoint:
+
+- Accepts GlueExecuteRequest validated with Zod
+- Requires X-Glue-Api-Key header validated against GLUE_API_KEY env var before any IO
+- Resolves the pinned workflow version (by UUID or version number) scoped to the organization
+- Enforces tenant/organization isolation (workflow lookup is scoped to organizationId)
+- Creates a workflow run in "pending" state
+- Creates the first pending step when the workflow definition declares steps
+- Returns runId, workflowVersionId, status, correlationId as a JSON envelope
+- Supports idempotency: duplicate correlationId returns the existing run (200) without creating a new one
+- Is fully testable via the pure handleExecuteRequest() function with injectable IO
+
+---
+
+## Files changed (Glue Inbound API Surface Sprint)
+
+src/lib/glue/m2m-auth.ts — New file. Pure validateGlueApiKey() function and
+X-Glue-Api-Key / GLUE_API_KEY constants for M2M authentication.
+
+src/lib/glue/api/execute-handler.ts — New file. Pure handleExecuteRequest() handler.
+Accepts a Request, validates auth before IO, validates payload with Zod, resolves the
+pinned workflow version, creates a run and optional first step, and returns a Response.
+Injectable GlueExecutionIO for tests bypasses Supabase.
+
+src/routes/api/v0/workflows/execute.ts — New file. TanStack Start server route that
+registers the stable /api/v0/workflows/execute path and delegates to handleExecuteRequest.
+
+src/routeTree.gen.ts — Updated to register the new /api/v0/workflows/execute route.
+
+src/lib/glue/__tests__/execute-handler.test.ts — New file. 20+ test cases covering:
+valid request creates run (201), missing/wrong key returns 401, invalid payload returns 400,
+pinned version by ID, pinned version by number, tenant isolation (404 for wrong org),
+correlationId persistence, duplicate correlationId idempotency (200), archived workflow
+returns 404, unpublished version returns 404, first step creation, no step when no steps
+defined, and response shape validation.
+
+docs/STATUS.md — Updated with Core → Glue call contract.
+
+---
+
+
+
+The Core to Glue integration is now complete. See the Glue Inbound API Surface Sprint section above for the Core → Glue call contract.
 
 ---
 
@@ -249,4 +344,4 @@ replay — Architecture Ready (not yet implemented)
 Integration surface:
 DualPay to Core — Active (stable POST /api/v0/evaluate, X-Core-Api-Key auth)
 DualPay to Core (legacy) — Active (M2M server function at /_server/<hash>)
-Core to Glue — Not started (Glue API surface required first)
+Core to Glue — Active (stable POST /api/v0/workflows/execute, X-Glue-Api-Key auth)
