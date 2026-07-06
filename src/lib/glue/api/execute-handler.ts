@@ -196,7 +196,7 @@ function buildIO(adminClient: ReturnType<typeof makeAdminClient>): GlueExecution
           status: "pending",
           subject_id: subjectId,
           correlation_id: correlationId,
-          input_json: payload as never,
+          payload: payload as never,
         })
         .select("id, version_id, status")
         .single();

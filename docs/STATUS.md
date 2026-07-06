@@ -328,6 +328,62 @@ The Core to Glue integration is now complete. See the Glue Inbound API Surface S
 
 ---
 
+## Glue Production Migration Sprint
+
+**Sprint goal:** Make POST /api/v0/workflows/execute work against the real Supabase production schema.
+
+**Completed:** 2026-07-06
+
+---
+
+## Database migration (workflow_runs)
+
+Migration file: `supabase/migrations/20260706000000_glue_production_migration.sql`
+
+### New columns added to `workflow_runs`
+
+| Column         | Type                    | Notes                                              |
+| -------------- | ----------------------- | -------------------------------------------------- |
+| subject_id     | TEXT NULL               | Subject entity this run is about (e.g. claim id)   |
+| correlation_id | TEXT NULL               | Caller-supplied idempotency key, unique per org    |
+| payload        | JSONB NOT NULL DEFAULT '{}' | Inbound execution payload                     |
+
+`created_by` changed from NOT NULL → NULL to allow M2M service-role inserts where no auth.uid() is available.
+
+### New indexes on `workflow_runs`
+
+| Index name                        | Columns                          | Notes               |
+| --------------------------------- | -------------------------------- | ------------------- |
+| idx_workflow_runs_org_correlation | (organization_id, correlation_id) WHERE correlation_id IS NOT NULL | Unique; enforces idempotency per org |
+| idx_workflow_runs_org_version     | (organization_id, version_id)    | Version lookups     |
+| idx_workflow_runs_org_status      | (organization_id, status)        | Status-filter queries |
+
+---
+
+## What was built (Glue Production Migration Sprint)
+
+`supabase/migrations/20260706000000_glue_production_migration.sql` — New migration.
+Adds subject_id, correlation_id, and payload columns to workflow_runs. Makes created_by
+nullable. Adds three composite indexes: unique (org + correlation_id) for idempotency,
+(org + version_id), and (org + status).
+
+`src/integrations/supabase/types.ts` — Updated workflow_runs Row/Insert/Update types
+to include subject_id (string | null), correlation_id (string | null), payload (Json),
+and created_by made nullable.
+
+`src/lib/glue/api/execute-handler.ts` — Updated createRun IO implementation to insert
+into the new payload column instead of input_json.
+
+`src/lib/glue/__tests__/execute-handler.test.ts` — Added 10 new tests across four suites:
+- Cross-org correlationId isolation (same correlationId in different org creates a new run)
+- subjectId persistence (subjectId is forwarded to createRun)
+- payload persistence (payload is forwarded to createRun)
+- workflowVersionId persistence (resolved version id is used and echoed in the response)
+
+docs/STATUS.md — This file.
+
+---
+
 ## Module status after this sprint
 
 Platform substrate: Active (unchanged)

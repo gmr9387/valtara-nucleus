@@ -778,45 +778,54 @@ export type Database = {
       workflow_runs: {
         Row: {
           completed_at: string | null;
+          correlation_id: string | null;
           created_at: string;
-          created_by: string;
+          created_by: string | null;
           error_json: Json | null;
           id: string;
           input_json: Json | null;
           organization_id: string;
           output_json: Json | null;
+          payload: Json;
           started_at: string | null;
           status: Database["public"]["Enums"]["workflow_run_status"];
+          subject_id: string | null;
           updated_at: string;
           version_id: string;
           workflow_id: string;
         };
         Insert: {
           completed_at?: string | null;
+          correlation_id?: string | null;
           created_at?: string;
-          created_by: string;
+          created_by?: string | null;
           error_json?: Json | null;
           id?: string;
           input_json?: Json | null;
           organization_id: string;
           output_json?: Json | null;
+          payload?: Json;
           started_at?: string | null;
           status?: Database["public"]["Enums"]["workflow_run_status"];
+          subject_id?: string | null;
           updated_at?: string;
           version_id: string;
           workflow_id: string;
         };
         Update: {
           completed_at?: string | null;
+          correlation_id?: string | null;
           created_at?: string;
-          created_by?: string;
+          created_by?: string | null;
           error_json?: Json | null;
           id?: string;
           input_json?: Json | null;
           organization_id?: string;
           output_json?: Json | null;
+          payload?: Json;
           started_at?: string | null;
           status?: Database["public"]["Enums"]["workflow_run_status"];
+          subject_id?: string | null;
           updated_at?: string;
           version_id?: string;
           workflow_id?: string;

@@ -479,3 +479,124 @@ describe("POST /api/v0/workflows/execute — response shape", () => {
     expect(body.status).toBe("pending");
   });
 });
+
+// ── Test 14: Same correlationId in different org → separate run ───────────────
+
+describe("POST /api/v0/workflows/execute — cross-org correlationId isolation", () => {
+  it("creates a new run when the same correlationId is used under a different org", async () => {
+    // For org-B, findRunByCorrelationId returns null (no existing run)
+    const io = makeIO({
+      findRunByCorrelationId: vi.fn().mockResolvedValue(null),
+    });
+    const req = makeRequest({
+      body: { ...VALID_PAYLOAD, organizationId: "org-other-002" },
+    });
+    const res = await handleExecuteRequest(req, io);
+
+    // A new run is created, not an idempotent 200
+    expect(res.status).toBe(201);
+    expect(io.createRun).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: "org-other-002", correlationId: CORRELATION_ID }),
+    );
+  });
+
+  it("findRunByCorrelationId is called with the correct organizationId", async () => {
+    const io = makeIO();
+    const req = makeRequest({
+      body: { ...VALID_PAYLOAD, organizationId: "org-other-002" },
+    });
+    await handleExecuteRequest(req, io);
+
+    expect(io.findRunByCorrelationId).toHaveBeenCalledWith("org-other-002", CORRELATION_ID);
+  });
+});
+
+// ── Test 15: subjectId persists ───────────────────────────────────────────────
+
+describe("POST /api/v0/workflows/execute — subjectId persistence", () => {
+  it("passes subjectId to createRun", async () => {
+    const io = makeIO();
+    const req = makeRequest({ body: { ...VALID_PAYLOAD, subjectId: "subject-abc-001" } });
+    await handleExecuteRequest(req, io);
+
+    expect(io.createRun).toHaveBeenCalledWith(
+      expect.objectContaining({ subjectId: "subject-abc-001" }),
+    );
+  });
+
+  it("preserves subjectId value from the request", async () => {
+    const customSubjectId = "claim-subject-999";
+    const io = makeIO();
+    const req = makeRequest({ body: { ...VALID_PAYLOAD, subjectId: customSubjectId } });
+    await handleExecuteRequest(req, io);
+
+    const call = (io.createRun as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(call.subjectId).toBe(customSubjectId);
+  });
+});
+
+// ── Test 16: payload persists ─────────────────────────────────────────────────
+
+describe("POST /api/v0/workflows/execute — payload persistence", () => {
+  it("passes payload to createRun", async () => {
+    const customPayload = { claimId: "claim-xyz", amount: 45000, flag: true };
+    const io = makeIO();
+    const req = makeRequest({ body: { ...VALID_PAYLOAD, payload: customPayload } });
+    await handleExecuteRequest(req, io);
+
+    expect(io.createRun).toHaveBeenCalledWith(expect.objectContaining({ payload: customPayload }));
+  });
+
+  it("accepts an empty payload object", async () => {
+    const io = makeIO();
+    const req = makeRequest({ body: { ...VALID_PAYLOAD, payload: {} } });
+    const res = await handleExecuteRequest(req, io);
+
+    expect(res.status).toBe(201);
+    expect(io.createRun).toHaveBeenCalledWith(expect.objectContaining({ payload: {} }));
+  });
+});
+
+// ── Test 17: workflowVersionId persists ──────────────────────────────────────
+
+describe("POST /api/v0/workflows/execute — workflowVersionId persistence", () => {
+  it("uses the resolved version id in the createRun call", async () => {
+    const customVersionId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    const io = makeIO({
+      resolveVersion: vi.fn().mockResolvedValue({
+        id: customVersionId,
+        version_number: 3,
+        status: "published",
+        firstStepKey: null,
+      }),
+    });
+    const req = makeRequest({ body: { ...VALID_PAYLOAD, workflowVersionId: customVersionId } });
+    await handleExecuteRequest(req, io);
+
+    expect(io.createRun).toHaveBeenCalledWith(
+      expect.objectContaining({ versionId: customVersionId }),
+    );
+  });
+
+  it("returns the resolved version id in the response envelope", async () => {
+    const customVersionId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    const io = makeIO({
+      resolveVersion: vi.fn().mockResolvedValue({
+        id: customVersionId,
+        version_number: 3,
+        status: "published",
+        firstStepKey: null,
+      }),
+      createRun: vi.fn().mockResolvedValue({
+        id: RUN_ID,
+        version_id: customVersionId,
+        status: "pending",
+      }),
+    });
+    const req = makeRequest({ body: { ...VALID_PAYLOAD, workflowVersionId: customVersionId } });
+    const res = await handleExecuteRequest(req, io);
+
+    const body = await res.json();
+    expect(body.workflowVersionId).toBe(customVersionId);
+  });
+});
