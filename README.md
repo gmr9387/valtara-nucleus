@@ -1,40 +1,63 @@
 # ValtariOS Core
 
-> Enterprise control plane for multi-tenant operations, workflow governance, and shared platform capabilities across ValtariOS products.
+> Shared platform control plane for multi-tenant operations, workflow governance, integrations, telemetry, and common platform capabilities across the ValtariOS product suite.
+
+ValtariOS Core is the shared platform layer for the ValtariOS ecosystem. It brings tenant-aware identity, organization and project management, connector and credential administration, workflow management, auditability, telemetry, and decision-engine foundations into a common control plane.
+
+The project is structured as a modular monolith backed by Supabase and PostgreSQL. It is designed to provide reusable platform capabilities that other ValtariOS products can build upon without independently reimplementing core infrastructure concerns.
+
+This repository represents an active platform implementation. Some runtime, testing, enterprise identity, and deployment capabilities remain under development or roadmap.
 
 ---
 
 ## Table of Contents
 
-* Overview
-* Why This Exists
-* Enterprise Highlights
-* Key Features
-* Architecture
-* Technology Stack
-* Project Structure
-* Core Workflows
-* Security
-* Database Design
-* API Overview
-* Installation
-* Configuration
-* Testing
-* Deployment
-* Performance
-* Roadmap
-* Documentation
-* Screenshots
-* Contributing
-* License
-* Author
-* Acknowledgements
+- [Overview](#overview)
+- [Why This Exists](#why-this-exists)
+- [Core Capabilities](#core-capabilities)
+- [Architecture](#architecture)
+- [Technology Stack](#technology-stack)
+- [Project Structure](#project-structure)
+- [Core Workflows](#core-workflows)
+- [Security](#security)
+- [Database Design](#database-design)
+- [API and Application Routes](#api-and-application-routes)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Testing and Verification](#testing-and-verification)
+- [Deployment](#deployment)
+- [Performance and Scalability](#performance-and-scalability)
+- [Current Status](#current-status)
+- [Known Limitations](#known-limitations)
+- [Roadmap](#roadmap)
+- [Documentation](#documentation)
+- [Screenshots](#screenshots)
+- [Contributing](#contributing)
+- [License](#license)
+- [Author](#author)
 
 ---
 
 # Overview
 
-ValtariOS Core is the shared platform layer for the ValtariOS product suite. It provides tenant-aware identity, organization and project management, secrets and connector administration, workflow orchestration, auditability, telemetry, and governance foundations in one modular monolith. It is designed for internal platform teams and future enterprise operators who need a single operational control plane that can serve multiple products without duplicating critical infrastructure concerns.
+ValtariOS Core provides shared infrastructure for the ValtariOS product suite.
+
+The platform currently brings together:
+
+- organization and tenant management;
+- projects and environments;
+- role-based access;
+- workflow definitions and versions;
+- workflow run tracking;
+- connector administration;
+- credential and secret metadata;
+- audit events;
+- telemetry events, metrics, and traces;
+- readiness and operational dashboards;
+- decision-engine contracts;
+- governance and replay-oriented foundations.
+
+The primary goal is to establish a common platform boundary so individual ValtariOS products can consume shared capabilities instead of creating separate implementations for identity, tenancy, workflow state, integrations, and operational visibility.
 
 ---
 
@@ -42,68 +65,109 @@ ValtariOS Core is the shared platform layer for the ValtariOS product suite. It 
 
 ## Business Problem
 
-Modern SaaS portfolios often evolve into disconnected products that each reimplement identity, tenancy, audit, workflow execution, and operational controls. That fragmentation increases cost, slows product delivery, and makes enterprise governance difficult.
+As a software portfolio grows, individual products often begin implementing the same foundational capabilities independently.
+
+Identity, tenant management, authorization, integrations, workflow state, audit logging, and operational monitoring can become fragmented across products.
+
+That creates duplicated infrastructure, inconsistent behavior, and additional maintenance requirements.
+
+ValtariOS Core explores a shared platform approach where those concerns are centralized behind a common control plane.
 
 ## Technical Challenge
 
-A shared platform must enforce strict tenant isolation, support role-aware access, centralize operational telemetry, manage integrations and secrets safely, and expose reusable contracts that multiple product modules can adopt without breaking live behavior.
+A shared platform needs to maintain clear boundaries between tenants while supporting:
+
+- role-aware authorization;
+- organization, project, and environment hierarchies;
+- reusable workflow primitives;
+- connector administration;
+- credential lifecycle metadata;
+- auditability;
+- telemetry;
+- predictable state transitions;
+- reusable contracts for future decision engines.
+
+The platform also needs to evolve without forcing every product built on top of it to independently recreate the same foundation.
 
 ## Solution
 
-ValtariOS Core centralizes these capabilities behind a single React-based control plane and a Supabase-backed data model with Row-Level Security. It combines shared platform modules, workflow runtime primitives, telemetry and audit trails, connector and secret management, and a staged decision-engine architecture so additional ValtariOS products can plug into common infrastructure safely.
+ValtariOS Core provides a Supabase/PostgreSQL-backed control plane with:
+
+- tenant-scoped data;
+- database-enforced RLS;
+- role-aware access;
+- workflow definitions and versions;
+- operational run tracking;
+- connector and credential administration;
+- audit and telemetry datasets;
+- shared TypeScript contracts;
+- decision-engine foundations.
+
+The current implementation focuses on establishing the shared substrate. Additional runtime and enterprise capabilities are identified separately as future work.
 
 ---
 
-# Enterprise Highlights
+# Core Capabilities
 
-* Enterprise-grade modular monolith architecture
-* Multi-tenant organization, project, and environment model
-* Secure Supabase authentication
-* Role-based access control (RBAC)
-* Row-Level Security (RLS) across platform tables
-* Append-only audit logging with correlation support
-* Durable workflow data model with versioning and run tracking
-* Workflow state guards for retry, terminal-state, and publish protections
-* Queue- and event-oriented platform foundations for future runtime hardening
-* Event-driven telemetry model for events, metrics, and traces
-* AI and decision-engine ready contracts for cross-product automation
-* REST-oriented public API direction under `/api/public/`
-* Real-time operational readiness and dashboard views
-* Structured observability through telemetry and audit datasets
-* Production-oriented cloud and edge runtime targeting
-* Scalable deployment model for shared platform services
-* Security-conscious schema design aligned to enterprise controls
-* Platform architecture prepared for healthcare and regulated workloads
+## Tenant and Organization Management
 
----
+- Organization creation
+- Organization membership
+- Role assignment
+- Project management
+- Environment management
+- Tenant-scoped operational views
 
-# Key Features
+## Workflow Management
 
-## Core Capabilities
+- Workflow definitions
+- Workflow versioning
+- Workflow publishing
+- Workflow run tracking
+- Step-level state
+- Workflow state guards
+- Operational workflow monitoring
 
-* Multi-organization tenant management
-* Project and environment administration
-* Core operations readiness dashboard
-* Workflow definition, versioning, and run management
-* Decision-engine contracts and governance modules
+## Connector Management
 
-## Administrative Features
+- Connector catalog
+- Connector versions
+- Connector capabilities
+- Connector bindings
+- Connector health checks
+- Organization, project, and environment-level integration scope
 
-* Organization membership and role management
-* Secrets and credential lifecycle tracking
-* Connector catalog, bindings, and health checks
+## Credential Management
 
-## Automation
+- Credential records
+- Credential versions
+- Credential rotation events
+- Redacted credential metadata
+- Controlled credential references
 
-* Workflow execution tracking with step-level state
-* Telemetry event, metric, and trace capture
-* Decision evaluation, confidence, trace, and replay modules
+## Audit and Telemetry
 
-## Reporting
+- Organization-scoped audit events
+- Correlation identifiers
+- Actor context
+- Before/after state information
+- Telemetry events
+- Telemetry metrics
+- Telemetry traces
+- Operational readiness views
 
-* Audit event history by organization
-* Readiness status across substrate modules
-* Dashboard metrics for projects, environments, and platform activity
+## Decision Engine Foundations
+
+The platform includes shared contracts for:
+
+- evaluation;
+- confidence;
+- governance;
+- traceability;
+- replay;
+- decision-oriented automation.
+
+These modules establish reusable interfaces for future rules-driven and AI-assisted decision workflows. They do not represent a claim that every decision-engine capability is currently operating as a complete production runtime.
 
 ---
 
@@ -111,7 +175,40 @@ ValtariOS Core centralizes these capabilities behind a single React-based contro
 
 ## High-Level Architecture
 
-> Insert architecture diagram.
+The platform consists of four primary layers:
+
+    ┌──────────────────────────────────────────────────────────┐
+    │                    ValtariOS Core UI                    │
+    │                                                          │
+    │  Dashboard · Core · Workflows · Audit · Connectors      │
+    │  Secrets · Governance · Operations                       │
+    └──────────────────────────┬───────────────────────────────┘
+                               │
+                               ▼
+    ┌──────────────────────────────────────────────────────────┐
+    │                 Shared TypeScript Layer                  │
+    │                                                          │
+    │  Core Modules · Schemas · Workflow Contracts             │
+    │  Decision Contracts · Shared Application Logic           │
+    └──────────────────────────┬───────────────────────────────┘
+                               │
+                               ▼
+    ┌──────────────────────────────────────────────────────────┐
+    │                    Supabase Platform                     │
+    │                                                          │
+    │  PostgreSQL · Auth · RLS · Storage                       │
+    │                                                          │
+    │  Organizations · Projects · Workflows · Credentials      │
+    │  Connectors · Audit · Telemetry                          │
+    └──────────────────────────┬───────────────────────────────┘
+                               │
+                               ▼
+    ┌──────────────────────────────────────────────────────────┐
+    │              Future Runtime / Product Layer              │
+    │                                                          │
+    │  Worker Runtime · Product Integrations · Decision       │
+    │  Execution · Additional ValtariOS Services              │
+    └──────────────────────────────────────────────────────────┘
 
 ---
 
@@ -119,41 +216,120 @@ ValtariOS Core centralizes these capabilities behind a single React-based contro
 
 ### Frontend
 
-TanStack Start with React 19 provides the operator-facing console, including landing, authentication, dashboard, core readiness, workflow, audit, connector, secret, and governance routes.
+React 19 with TanStack Start provides the operator-facing application.
 
-### Backend
+Current areas include:
 
-Application logic is organized in shared TypeScript modules under `src/lib`, with server-facing integrations and route logic built around Supabase-backed data access patterns.
+- landing;
+- authentication;
+- dashboard;
+- core readiness;
+- workflows;
+- audit;
+- connectors;
+- secrets;
+- governance.
+
+### Application Layer
+
+Shared TypeScript modules under `src/lib` provide common application logic, schemas, core modules, and workflow-oriented contracts.
 
 ### Database
 
-PostgreSQL via Supabase stores tenant, project, environment, workflow, connector, credential, audit, and telemetry data with policy-driven isolation.
+PostgreSQL through Supabase stores:
+
+- organizations;
+- organization members;
+- projects;
+- environments;
+- workflows;
+- workflow versions;
+- workflow runs;
+- workflow steps;
+- credentials;
+- credential versions;
+- credential rotation events;
+- connectors;
+- connector bindings;
+- connector health checks;
+- audit events;
+- telemetry events;
+- telemetry metrics;
+- telemetry traces.
 
 ### Authentication
 
-Supabase Auth manages sessions and user identity, while UI permission checks mirror server-side role rules enforced through database policies.
+Supabase Auth manages user identity and sessions.
 
-### Storage
+Application-level permission checks are paired with database authorization through tenant membership and RLS policies.
 
-Credential payloads are referenced through redacted version metadata and storage references, with the schema designed to keep sensitive material out of broadly readable tables.
+### Storage and Credential References
 
-### AI Services
+Credential information is represented through versioned and redacted metadata with storage references rather than exposing sensitive material through broadly readable application tables.
 
-The decision-engine modules define reusable contracts for evaluation, confidence scoring, governance, replay, and traceability, preparing the platform for AI-assisted and rules-driven automation.
+### Decision Engine
 
-### Background Workers
+Decision-engine modules define reusable contracts for evaluation, confidence, governance, replay, and traceability.
 
-Workflow runs, steps, telemetry capture, and future worker-pool runtime hardening establish the foundation for asynchronous processing and recovery-oriented execution.
+These contracts provide a foundation for future decision-oriented capabilities across ValtariOS products.
+
+### Runtime Foundations
+
+Workflow runs, workflow steps, telemetry, and state guards establish the data model needed for asynchronous execution and recovery-oriented runtime behavior.
+
+A more complete worker runtime remains future work.
 
 ### Integrations
 
-Connector providers, connector versions, capabilities, bindings, and health checks support external system integrations across categories such as AI, messaging, payments, social, database, and other services.
+Connector records support external services across categories including:
+
+- AI;
+- messaging;
+- payments;
+- social;
+- databases;
+- other external services.
+
+The connector model is intended to allow additional ValtariOS products to consume shared integration infrastructure.
 
 ---
 
-## Data Flow
+# Data Flow
 
-Users authenticate through Supabase and enter the ValtariOS Core console. From the UI, actions such as creating organizations, managing projects, configuring secrets, binding connectors, or operating workflows are routed through shared application modules and persisted to Supabase-managed PostgreSQL tables. Row-Level Security policies constrain each read and write by tenant membership and role. Audit and telemetry records capture operational activity, while workflow and decision-engine modules maintain structured state that future products can consume.
+A typical platform interaction follows this pattern:
+
+    User
+      │
+      ▼
+    Supabase Auth
+      │
+      ▼
+    ValtariOS Core Console
+      │
+      ├── Organization / Project / Environment
+      │
+      ├── Workflow Management
+      │
+      ├── Connector Administration
+      │
+      └── Credential Administration
+      │
+      ▼
+    Shared TypeScript Modules
+      │
+      ▼
+    Supabase / PostgreSQL
+      │
+      ├── RLS authorization
+      ├── Audit records
+      ├── Telemetry
+      ├── Workflow state
+      └── Integration metadata
+      │
+      ▼
+    Future Product / Runtime Consumers
+
+The database remains the primary source of persisted platform state.
 
 ---
 
@@ -161,120 +337,181 @@ Users authenticate through Supabase and enter the ValtariOS Core console. From t
 
 ## Frontend
 
-* React 19
-* TypeScript
-* TanStack Start
-* Tailwind CSS v4
+- React 19
+- TypeScript
+- TanStack Start
+- Tailwind CSS v4
 
-## Backend
+## Backend and Data
 
-* Supabase
-* PostgreSQL
-* TypeScript shared modules
+- Supabase
+- PostgreSQL
+- Supabase Auth
+- Supabase Storage
+- TypeScript application modules
 
 ## Infrastructure
 
-* Cloudflare-compatible edge runtime
-* Supabase-managed storage and database services
-* Supabase authentication
+- Vite
+- Cloudflare-compatible runtime configuration
+- Supabase-managed database and authentication services
+- Supabase migrations
 
-## AI
+## Validation and Development
 
-* Decision-engine contracts for evaluation and governance
-* AI-oriented connector categories and service integration readiness
-* Cross-product automation foundations
+- ESLint
+- Prettier
+- TypeScript
+- Vite build tooling
 
-## DevOps
+## AI and Decision Systems
 
-* GitHub
-* ESLint and Prettier
-* Vite build pipeline
-* Telemetry and audit-based observability
+The current platform provides decision-engine contracts and AI-oriented connector categories.
+
+The repository does not represent every AI capability as a completed production decision engine.
 
 ---
 
 # Project Structure
 
-```text
-project/
-│
-├── src/
-│   ├── components/
-│   ├── hooks/
-│   ├── integrations/
-│   ├── lib/
-│   │   ├── core/
-│   │   ├── schemas/
-│   │   └── workflows/
-│   ├── routes/
-│   ├── router.tsx
-│   ├── routeTree.gen.ts
-│   ├── server.ts
-│   ├── start.ts
-│   └── styles.css
-├── supabase/
-│   ├── config.toml
-│   └── migrations/
-├── public/
-├── README.md
-├── package.json
-├── bun.lock
-├── components.json
-├── eslint.config.js
-├── tsconfig.json
-├── vite.config.ts
-└── wrangler.jsonc
-```
+    project/
+    │
+    ├── src/
+    │   ├── components/
+    │   ├── hooks/
+    │   ├── integrations/
+    │   ├── lib/
+    │   │   ├── core/
+    │   │   ├── schemas/
+    │   │   └── workflows/
+    │   ├── routes/
+    │   ├── router.tsx
+    │   ├── routeTree.gen.ts
+    │   ├── server.ts
+    │   ├── start.ts
+    │   └── styles.css
+    │
+    ├── supabase/
+    │   ├── config.toml
+    │   └── migrations/
+    │
+    ├── public/
+    ├── README.md
+    ├── package.json
+    ├── bun.lock
+    ├── components.json
+    ├── eslint.config.js
+    ├── tsconfig.json
+    ├── vite.config.ts
+    └── wrangler.jsonc
 
 ---
 
 # Core Workflows
 
-## Tenant Setup
+## 1. Tenant Setup
 
-Purpose
+### Purpose
 
-Establish an organization, assign membership, and create the initial project and environment structure.
+Establish an organization and its initial project and environment structure.
 
-Process
+### Process
 
-A user signs in, creates an organization, is seeded as owner, adds members through role-aware controls, and provisions projects and environments within that tenant.
+A user authenticates, creates an organization, is established as an owner, and provisions projects and environments within that organization.
 
-Expected Result
+### Result
 
-A tenant-scoped workspace is created with secure role and data boundaries in place.
-
----
-
-## Integration and Secrets Operations
-
-Purpose
-
-Manage credentials and connector bindings required for external platform integrations.
-
-Process
-
-Administrators register credentials, manage versions and rotation events, bind connectors at organization, project, or environment scope, and monitor connector health checks.
-
-Expected Result
-
-External integrations are centrally governed with auditable metadata and controlled tenant access.
+A tenant-scoped workspace exists with organization membership and role-aware access controls.
 
 ---
 
-## Workflow Execution and Monitoring
+## 2. Organization Membership
 
-Purpose
+### Purpose
 
-Create, publish, run, and monitor workflows across an organization.
+Manage access to shared platform resources.
 
-Process
+### Process
 
-Managers define workflow versions, publish immutable workflow definitions, operators start runs, workflow steps progress through tracked states, and audit and telemetry data capture lifecycle events.
+Organization members are associated with roles such as:
 
-Expected Result
+- owner;
+- admin;
+- manager;
+- operator;
+- viewer.
 
-Operational workflows are executed with traceable status, controlled state transitions, and tenant-aware observability.
+Database policies use organization membership and role information to constrain access.
+
+### Result
+
+Platform resources remain scoped to the organization and the permissions associated with the authenticated member.
+
+---
+
+## 3. Connector and Credential Administration
+
+### Purpose
+
+Manage external integration metadata and credential lifecycle information.
+
+### Process
+
+Administrators register credentials, maintain credential versions and rotation events, configure connector bindings, and review connector health information.
+
+### Result
+
+External integrations can be managed from a common platform layer rather than independently inside every product.
+
+---
+
+## 4. Workflow Management
+
+### Purpose
+
+Create and manage reusable workflows.
+
+### Process
+
+Managers define workflow structures, create versions, publish workflow definitions, and initiate workflow runs.
+
+Workflow records track lifecycle state and individual steps.
+
+### Result
+
+Products have a shared workflow representation that can be extended as runtime capabilities mature.
+
+---
+
+## 5. Audit and Telemetry
+
+### Purpose
+
+Provide operational visibility into platform activity.
+
+### Process
+
+Platform actions generate audit and telemetry records containing relevant actor, organization, entity, timestamp, and correlation information.
+
+### Result
+
+Operators can inspect platform activity through centralized audit and telemetry views.
+
+---
+
+## 6. Decision-Engine Foundations
+
+### Purpose
+
+Provide shared contracts for future rules-driven and AI-assisted decision workflows.
+
+### Process
+
+Decision modules define evaluation, confidence, governance, trace, and replay-oriented structures.
+
+### Result
+
+Products can build on a common decision model rather than inventing separate interfaces for every product.
 
 ---
 
@@ -282,31 +519,71 @@ Operational workflows are executed with traceable status, controlled state trans
 
 ## Authentication
 
-Supabase Auth handles user identity and session management, and the application redirects authenticated users into the protected console experience.
+Supabase Auth provides user identity and session management.
+
+Protected application routes require authentication before users can access the operational console.
 
 ## Authorization
 
-RBAC is modeled through `app_role` values such as owner, admin, manager, operator, and viewer. Row-Level Security policies enforce authorization at the database layer for tenant resources.
+The platform uses role-aware authorization combined with PostgreSQL Row-Level Security.
 
-## Data Protection
+Current role concepts include:
 
-Sensitive credential values are represented through encrypted payload references and redacted previews rather than open plaintext storage in generally readable tables.
+- owner;
+- admin;
+- manager;
+- operator;
+- viewer.
+
+The database remains an important authorization boundary rather than relying exclusively on UI controls.
+
+## Multi-Tenant Isolation
+
+Organizations represent the primary tenant boundary.
+
+Resources such as:
+
+- projects;
+- environments;
+- workflows;
+- credentials;
+- connectors;
+- audit events;
+- telemetry
+
+are associated with organizational scope.
+
+RLS policies are used to constrain access according to authenticated organization membership and role.
+
+## Credential Handling
+
+Credential records are represented through controlled metadata, versioning, rotation information, and references rather than exposing sensitive values through generally readable tables.
+
+The repository does not claim that this architecture alone constitutes a complete secrets-management or compliance certification.
 
 ## Audit Logging
 
-Audit events record module, action, entity, before and after state snapshots, correlation identifiers, and actor context for traceability.
+Audit events capture operational context including:
+
+- module;
+- action;
+- entity;
+- actor;
+- organization;
+- correlation identifiers;
+- before/after state information.
+
+These records provide an audit-oriented history of platform activity.
 
 ## Input Validation
 
-The project uses Zod schemas and structured TypeScript contracts to validate application data and domain inputs.
+Zod schemas and TypeScript contracts are used to validate application and domain data.
 
-## Error Handling
+Database constraints and state guards provide additional protection at the persistence layer.
 
-The application includes shared error-state components and route-level handling patterns, while database guards prevent invalid workflow and version transitions.
+## Workflow State Protection
 
-## Compliance
-
-The architecture emphasizes tenant isolation, least-privilege role modeling, append-only operational records, and secrets handling patterns that support enterprise security expectations.
+Workflow and version state transitions include database and application-level guards intended to prevent invalid lifecycle changes.
 
 ---
 
@@ -314,49 +591,99 @@ The architecture emphasizes tenant isolation, least-privilege role modeling, app
 
 ## Overview
 
-The database is organized around multi-tenant platform primitives, operational workflow entities, observability datasets, and integration management tables, all protected by Row-Level Security.
+The database is organized around shared platform primitives and operational datasets.
+
+Organizations provide the primary tenant boundary.
+
+Projects and environments provide additional structure for product and deployment scope.
+
+Workflows, connectors, credentials, audit records, and telemetry build on those platform relationships.
 
 ## Core Tables
 
-* organizations and organization_members
-* projects and environments
-* workflows, workflow_versions, workflow_runs, and workflow_steps
-* credentials, credential_versions, and credential_rotation_events
-* connectors, connector_bindings, and connector_health_checks
-* audit_events, telemetry_events, telemetry_metrics, and telemetry_traces
+- `organizations`
+- `organization_members`
+- `projects`
+- `environments`
+- `workflows`
+- `workflow_versions`
+- `workflow_runs`
+- `workflow_steps`
+- `credentials`
+- `credential_versions`
+- `credential_rotation_events`
+- `connectors`
+- `connector_bindings`
+- `connector_health_checks`
+- `audit_events`
+- `telemetry_events`
+- `telemetry_metrics`
+- `telemetry_traces`
 
 ## Relationships
 
-Organizations are the primary tenant boundary. Projects belong to organizations, environments belong to projects, workflows and operational data are organization-scoped, and connector and credential records can attach at organization, project, or environment scope. Workflow runs link back to workflow definitions and versions, while step records and audit events provide execution detail.
+The primary hierarchy is:
 
-## Indexing Strategy
+    Organization
+        │
+        ├── Members
+        │
+        ├── Projects
+        │      │
+        │      └── Environments
+        │
+        ├── Workflows
+        │      │
+        │      ├── Workflow Versions
+        │      └── Workflow Runs
+        │             │
+        │             └── Workflow Steps
+        │
+        ├── Connectors
+        │      │
+        │      └── Connector Bindings
+        │
+        └── Credentials
+               │
+               ├── Credential Versions
+               └── Rotation Events
 
-The schema includes indexes on tenant identifiers, workflow status, audit timestamps, telemetry dimensions, connector bindings, and credential relationships to support operational dashboards, policy checks, and recent-activity queries.
+Audit and telemetry datasets provide cross-cutting operational visibility.
+
+## Indexing
+
+The schema includes indexes around tenant identifiers, workflow state, audit timestamps, telemetry dimensions, connector bindings, and credential relationships.
+
+These indexes support common operational and tenant-scoped access patterns.
 
 ---
 
-# API Overview
+# API and Application Routes
 
 ## Authentication
 
-Authenticated access is required for protected platform operations, and tenant actions are further constrained by organization membership and role.
+Authenticated access is required for protected platform operations.
 
-## Primary Endpoints
+Tenant actions are further constrained by organization membership and role.
 
-| Endpoint | Purpose |
-| -------- | ------- |
-| `/` | Public landing page for the shared platform layer |
+## Current Application Routes
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Public landing page |
 | `/login` | Authentication entry point |
 | `/_app/dashboard` | Tenant operations dashboard |
 | `/_app/core` | Core readiness and module registry |
 | `/_app/workflows` | Workflow management and execution views |
 | `/_app/audit` | Audit activity interface |
 | `/_app/connectors` | Connector administration |
-| `/_app/secrets` | Secret and credential administration |
+| `/_app/secrets` | Credential administration |
 
-## Response Format
+## API Direction
 
-The application primarily serves route-based UI experiences backed by typed Supabase data access. Domain data is structured through TypeScript interfaces and Zod schemas for predictable request and response handling.
+The current application is primarily route-driven and backed by typed Supabase data access.
+
+A broader public API surface under `/api/public/` is part of the platform's longer-term direction rather than being presented here as a completed public API product.
 
 ---
 
@@ -364,56 +691,92 @@ The application primarily serves route-based UI experiences backed by typed Supa
 
 ## Prerequisites
 
-* Bun
-* Node.js-compatible local development environment
+- Bun
+- Node.js-compatible development environment
+- Access to a Supabase project
 
 ## Clone Repository
 
-```bash
-git clone <repository-url>
-```
+    git clone <repository-url>
 
 ## Install Dependencies
 
-```bash
-bun install
-```
+    bun install
 
 ## Configure Environment
 
-Create a `.env` file and add the required environment variables for Supabase, local app execution, and any deployment-specific settings.
+Create a `.env` file containing the required Supabase and application configuration.
 
 ## Start Development Server
 
-```bash
-bun dev
-```
+    bun dev
 
 ---
 
 # Configuration
 
-Configuration is driven by environment variables, Supabase project settings, authentication configuration, and edge/runtime settings defined by files such as `wrangler.jsonc`, `vite.config.ts`, and `supabase/config.toml`. Any deployment must supply the required Supabase connection and authentication values before the application can run correctly.
+Configuration is driven through environment variables and project configuration files including:
+
+- `.env`
+- `vite.config.ts`
+- `supabase/config.toml`
+- `wrangler.jsonc`
+
+The application requires the appropriate Supabase project and authentication configuration before database-backed functionality can operate correctly.
+
+Do not commit private credentials or service-role secrets to the repository.
 
 ---
 
-# Testing
+# Testing and Verification
 
-## Unit Tests
+## Current Test Position
 
-No dedicated unit test suite is currently defined in `package.json`; shared module behavior should be validated through targeted future tests as the platform matures.
+The repository does not currently define a dedicated automated unit-test suite in `package.json`.
 
-## Integration Tests
+This is an important current limitation and is intentionally documented rather than presented as broader test coverage than exists.
 
-Database-backed and route-level integration behavior is currently validated through application flows, schema constraints, and existing development tooling rather than a standalone automated integration suite.
+## Application Validation
 
-## Manual Testing
+Current validation can include:
 
-Manual verification should cover authentication, organization switching, dashboard visibility, core readiness, workflow lifecycle operations, and connector or secret administration flows.
+- TypeScript/build validation;
+- linting;
+- manual application flows;
+- database schema behavior;
+- authentication flows;
+- RLS behavior;
+- workflow state transitions.
+
+## Manual Verification
+
+Representative verification should include:
+
+1. Authenticate a user.
+2. Create or access an organization.
+3. Confirm organization membership and role behavior.
+4. Create a project.
+5. Create an environment.
+6. Create and manage workflow definitions.
+7. Create workflow versions.
+8. Verify publishing and state protections.
+9. Configure connector metadata.
+10. Review credential version and rotation records.
+11. Inspect audit activity.
+12. Inspect telemetry records.
+13. Verify users cannot access resources outside their authorized organization.
+
+## Integration Testing
+
+The repository does not currently claim a comprehensive standalone automated integration-test suite.
+
+Additional automated coverage is appropriate as the shared platform expands.
 
 ## Performance Testing
 
-Performance validation currently relies on build validation, telemetry instrumentation, and operational observation, with room for more formal load and runtime testing in later releases.
+Formal production-scale benchmarks have not been established.
+
+Performance work remains an area for future validation.
 
 ---
 
@@ -421,75 +784,269 @@ Performance validation currently relies on build validation, telemetry instrumen
 
 ## Development
 
-Run locally with Bun and Vite while connecting to the appropriate Supabase configuration.
+Run the application locally using Bun and the configured Supabase environment.
+
+    bun dev
+
+## Build
+
+    bun run build
+
+## Lint
+
+    bun run lint
 
 ## Staging
 
-Deploy to a cloud or edge-hosted environment with isolated Supabase resources and configuration for pre-production validation.
+A staging deployment should use isolated Supabase resources and environment-specific configuration before being considered for broader operational use.
 
 ## Production
 
-Deploy as a hardened shared platform service with controlled environment variables, tenant-aware database policies, and monitoring over workflow, audit, and telemetry paths.
+The repository contains configuration and architecture suitable for continued deployment development, but this project does not claim to be a commercially deployed production platform.
+
+Production deployment would require additional validation around:
+
+- database security;
+- authentication;
+- secrets management;
+- monitoring;
+- backups;
+- runtime execution;
+- load;
+- incident handling;
+- compliance requirements appropriate to the deployment.
 
 ---
 
-# Performance
+# Performance and Scalability
 
-## Optimization
+## Current Position
 
-The application uses a modern Vite-based build, route-based code organization, and indexed database access patterns for operational responsiveness.
+The platform uses:
 
-## Caching
+- indexed tenant-scoped database access;
+- TanStack Query for client-side query management;
+- modular application boundaries;
+- Supabase/PostgreSQL persistence;
+- reusable shared platform modules.
 
-Client-side query management is handled through TanStack Query, which reduces unnecessary refetching and supports responsive operator workflows.
+These characteristics provide a foundation for continued scaling work.
 
-## Background Processing
+## What Has Not Been Established
 
-Workflow run and step modeling, telemetry capture, and roadmap runtime hardening establish the basis for resilient asynchronous processing.
+The project does not currently claim:
 
-## Scalability
+- a specific throughput target;
+- a production latency SLA;
+- a verified concurrent-user limit;
+- formal load-test results;
+- multi-region execution;
+- production-scale worker capacity.
 
-The platform is designed around reusable shared services, tenant partitioning with RLS, and an edge-compatible deployment model to support growth across multiple products.
+Those claims should be established through measurement rather than architecture assumptions.
+
+## Future Runtime Scaling
+
+Future work can introduce:
+
+- dedicated workers;
+- queue processing;
+- background execution;
+- stronger telemetry;
+- distributed tracing;
+- scaling controls;
+- additional runtime isolation.
+
+---
+
+# Current Status
+
+ValtariOS Core currently provides the shared platform foundation for the ValtariOS ecosystem.
+
+### Implemented Foundations
+
+- Multi-tenant organization model
+- Organization membership
+- Role model
+- Project management
+- Environment management
+- Workflow definitions
+- Workflow versioning
+- Workflow run and step models
+- Connector catalog
+- Connector bindings
+- Credential versioning
+- Credential rotation records
+- Audit datasets
+- Telemetry datasets
+- Core readiness views
+- Decision-engine contracts
+- Supabase/PostgreSQL integration
+- RLS-based tenant authorization
+
+### Developing / Expanding
+
+- Broader automated test coverage
+- Runtime worker execution
+- Product integration spine
+- Public API surface
+- Advanced identity controls
+- Enterprise identity integrations
+- Deeper decision-engine execution
+
+---
+
+# Known Limitations
+
+The following limitations are intentionally documented.
+
+## Automated Test Coverage
+
+There is currently no dedicated unit-test suite defined in `package.json`.
+
+## Integration Coverage
+
+The repository does not currently claim a comprehensive standalone automated integration-test suite.
+
+## Runtime Execution
+
+Workflow persistence and state modeling exist, but a fully hardened worker runtime remains future work.
+
+## Public API
+
+The platform has a direction toward a public API surface, but the current repository should not be interpreted as a completed public API product.
+
+## Enterprise Identity
+
+SSO and SCIM are roadmap capabilities.
+
+## Performance
+
+Formal load testing and published performance baselines have not been completed.
+
+## Multi-Region
+
+Multi-region execution and enforcement remain future work.
+
+## Compliance
+
+The architecture includes security-oriented controls such as RLS, role-aware access, audit records, and credential-handling patterns.
+
+This repository does not claim:
+
+- HIPAA certification;
+- SOC 2 certification;
+- independent security certification;
+- independent compliance audit;
+- production authorization for regulated workloads.
+
+Any regulated deployment would require its own security, legal, privacy, compliance, and operational assessment.
 
 ---
 
 # Roadmap
 
-## Current Release
+## Near Term
 
-Foundation substrate modules, workflow primitives, readiness dashboards, and decision-engine contracts are in place.
+- Expand automated unit and integration testing.
+- Strengthen workflow runtime validation.
+- Continue improving platform readiness checks.
+- Expand connector lifecycle capabilities.
+- Improve operational telemetry.
 
-## Next Release
+## Product Integration Spine
 
-Planned work includes product integration spine capabilities such as product registry support, service accounts, scoped API keys, and event ingest.
+Planned capabilities include:
 
-## Future Vision
+- product registry;
+- service accounts;
+- scoped API keys;
+- event ingestion;
+- shared product-to-core contracts.
 
-Longer-term goals include deeper identity controls, enterprise SSO and SCIM, commercial entitlements, worker runtime hardening, and full extraction of live decision-engine execution into the shared core.
+## Runtime
+
+Future work includes:
+
+- dedicated worker execution;
+- durable background processing;
+- stronger retry and recovery semantics;
+- runtime health monitoring;
+- queue and execution telemetry.
+
+## Identity and Access
+
+Future capabilities include:
+
+- SSO;
+- SCIM;
+- stronger authentication controls;
+- expanded service-account management;
+- more granular API authorization.
+
+## Decision Engine
+
+Future work includes:
+
+- live decision-engine execution;
+- expanded governance policies;
+- richer confidence handling;
+- decision replay;
+- AI-assisted workflows where appropriate.
+
+## Platform Expansion
+
+Longer-term development may include:
+
+- commercial entitlements;
+- broader product integration;
+- stronger observability;
+- distributed tracing;
+- regional execution controls;
+- additional shared ValtariOS services.
 
 ---
 
 # Documentation
 
-| Document | Description |
-| -------- | ----------- |
-| README | Product overview and operational context |
-| `src/lib/core/*` | Decision-engine and readiness module definitions |
+| Resource | Purpose |
+| --- | --- |
+| `README.md` | Platform overview and current capabilities |
+| `src/lib/core/*` | Core platform and decision-engine modules |
 | `src/lib/schemas/*` | Domain validation schemas |
-| `supabase/migrations/*` | Database schema and security model history |
-| `src/routes/*` | Route-driven application workflows |
+| `src/lib/workflows/*` | Workflow-oriented modules |
+| `supabase/migrations/*` | Database schema and security history |
+| `src/routes/*` | Application routes and platform workflows |
 
 ---
 
 # Screenshots
 
-> Add screenshots, diagrams, dashboards, or workflow illustrations.
+Screenshots and architecture diagrams can be added as the visual demonstration package is finalized.
+
+The primary technical evidence remains the repository source, migrations, application structure, and documented implementation status.
 
 ---
 
 # Contributing
 
-Contributors should keep changes focused, follow the existing TypeScript and React patterns, preserve tenant-aware security controls, and validate changes with the repository's existing lint and build commands. Pull requests should clearly explain behavioral impact, especially for schema, workflow, security, and shared platform changes.
+Contributors should:
+
+1. Keep changes focused.
+2. Follow the existing TypeScript and React patterns.
+3. Preserve tenant-aware authorization.
+4. Avoid weakening RLS policies to simplify application behavior.
+5. Validate schema changes carefully.
+6. Add automated tests as shared modules mature.
+7. Document behavioral changes affecting workflows, security, integrations, or platform contracts.
+8. Use pull requests for reviewable changes.
+
+Before submitting a change, run the applicable repository validation commands, including:
+
+    bun run lint
+    bun run build
+
+Additional tests should be added as the platform's automated verification layer expands.
 
 ---
 
@@ -507,8 +1064,4 @@ Founder & Software Engineer
 
 **Valtaris Technologies**
 
----
-
-# Acknowledgements
-
-Thanks to the maintainers of React, TanStack Start, Vite, Tailwind CSS, Supabase, Zod, Zustand, Lucide, and the broader open-source ecosystem that underpins the ValtariOS Core platform.
+ValtariOS Core is an independent engineering project focused on shared platform architecture, multi-tenant application infrastructure, workflow systems, integrations, telemetry, and reusable decision-engine foundations.
