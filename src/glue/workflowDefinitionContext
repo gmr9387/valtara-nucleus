@@ -1,0 +1,59 @@
+/**
+ * Workflow definition context for the Valtaris Glue workflow builder.
+ * Provides deterministic shared state for workflow definitions across
+ * nested editors (steps, triggers, metadata).
+ */
+
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  ReactNode
+} from "react";
+import { WorkflowDefinition } from "./workflow";
+
+interface WorkflowDefinitionContextValue {
+  definition: WorkflowDefinition | null;
+  setDefinition: (def: WorkflowDefinition) => void;
+  updateDefinition: (partial: Partial<WorkflowDefinition>) => void;
+}
+
+const WorkflowDefinitionContext = createContext<WorkflowDefinitionContextValue | null>(
+  null
+);
+
+export function WorkflowDefinitionProvider({
+  initial,
+  children
+}: {
+  initial: WorkflowDefinition;
+  children: ReactNode;
+}) {
+  const [definition, setDefinition] = useState<WorkflowDefinition>(initial);
+
+  const updateDefinition = useCallback(
+    (partial: Partial<WorkflowDefinition>) => {
+      setDefinition(prev => ({ ...prev, ...partial }));
+    },
+    []
+  );
+
+  return (
+    <WorkflowDefinitionContext.Provider
+      value={{ definition, setDefinition, updateDefinition }}
+    >
+      {children}
+    </WorkflowDefinitionContext.Provider>
+  );
+}
+
+export function useWorkflowDefinitionContext() {
+  const ctx = useContext(WorkflowDefinitionContext);
+  if (!ctx) {
+    throw new Error(
+      "useWorkflowDefinitionContext must be used within a WorkflowDefinitionProvider"
+    );
+  }
+  return ctx;
+}
