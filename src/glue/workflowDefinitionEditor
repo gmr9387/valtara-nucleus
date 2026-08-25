@@ -1,0 +1,98 @@
+/**
+ * Workflow definition editor UI for the Valtaris Glue workflow builder.
+ * Provides deterministic editing of steps, triggers, and definition metadata.
+ */
+
+import { useState } from "react";
+import { WorkflowDefinition, WorkflowStep, WorkflowTrigger } from "./workflow";
+import { StepEditor } from "./stepEditor";
+import { TriggerEditor } from "./triggerEditor";
+
+interface WorkflowDefinitionEditorProps {
+  definition: WorkflowDefinition;
+  onChange: (updated: WorkflowDefinition) => void;
+}
+
+export function WorkflowDefinitionEditor(props: WorkflowDefinitionEditorProps) {
+  const [local, setLocal] = useState<WorkflowDefinition>(props.definition);
+
+  function update<K extends keyof WorkflowDefinition>(
+    key: K,
+    value: WorkflowDefinition[K]
+  ) {
+    const updated = { ...local, [key]: value };
+    setLocal(updated);
+    props.onChange(updated);
+  }
+
+  function addStep() {
+    const newStep: WorkflowStep = {
+      id: crypto.randomUUID(),
+      type: "task",
+      name: "New Step",
+      config: {},
+      metadata: {}
+    };
+
+    update("steps", [...local.steps, newStep]);
+  }
+
+  function addTrigger() {
+    const newTrigger: WorkflowTrigger = {
+      id: crypto.randomUUID(),
+      type: "http",
+      config: {},
+      metadata: {}
+    };
+
+    update("triggers", [...local.triggers, newTrigger]);
+  }
+
+  return (
+    <div className="workflow-definition-editor">
+      <h2>Workflow Definition</h2>
+
+      <h3>Steps</h3>
+      <button onClick={addStep}>Add Step</button>
+
+      {local.steps.map((step, index) => (
+        <StepEditor
+          key={step.id}
+          step={step}
+          onChange={updated => {
+            const newSteps = [...local.steps];
+            newSteps[index] = updated;
+            update("steps", newSteps);
+          }}
+        />
+      ))}
+
+      <h3>Triggers</h3>
+      <button onClick={addTrigger}>Add Trigger</button>
+
+      {local.triggers.map((trigger, index) => (
+        <TriggerEditor
+          key={trigger.id}
+          trigger={trigger}
+          onChange={updated => {
+            const newTriggers = [...local.triggers];
+            newTriggers[index] = updated;
+            update("triggers", newTriggers);
+          }}
+        />
+      ))}
+
+      <h3>Metadata</h3>
+      <textarea
+        value={JSON.stringify(local.metadata, null, 2)}
+        onChange={e => {
+          try {
+            update("metadata", JSON.parse(e.target.value || "{}"));
+          } catch {
+            // ignore invalid JSON
+          }
+        }}
+      />
+    </div>
+  );
+}
