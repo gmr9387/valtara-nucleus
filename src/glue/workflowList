@@ -1,0 +1,63 @@
+/**
+ * Workflow list UI for the Valtaris Glue control plane.
+ * Provides deterministic rendering of workflows, typed props,
+ * and clean component structure consistent with Valtaris UI patterns.
+ */
+
+import { useEffect, useState } from "react";
+import { Workflow } from "./workflow";
+
+interface WorkflowListProps {
+  organizationId: string;
+  projectId: string;
+  environmentId: string;
+}
+
+export function WorkflowList(props: WorkflowListProps) {
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+
+      const params = new URLSearchParams({
+        organizationId: props.organizationId,
+        projectId: props.projectId,
+        environmentId: props.environmentId
+      });
+
+      const res = await fetch(`/workflows?${params.toString()}`);
+      const data = await res.json();
+
+      setWorkflows(data);
+      setLoading(false);
+    }
+
+    load();
+  }, [props.organizationId, props.projectId, props.environmentId]);
+
+  if (loading) {
+    return <div>Loading workflows…</div>;
+  }
+
+  if (workflows.length === 0) {
+    return <div>No workflows found.</div>;
+  }
+
+  return (
+    <div className="workflow-list">
+      <h2>Workflows</h2>
+
+      <ul>
+        {workflows.map(w => (
+          <li key={w.id}>
+            <strong>{w.name}</strong>
+            <div>{w.description}</div>
+            <div>Version {w.activeVersion}</div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
