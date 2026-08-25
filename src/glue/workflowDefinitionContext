@@ -1,58 +1,61 @@
 /**
- * Workflow definition context for the Valtaris Glue workflow builder.
- * Provides deterministic shared state for workflow definitions across
- * nested editors (steps, triggers, metadata).
+ * workflowDefinitionContext.tsx
+ *
+ * React context wrapper for the Workflow Definition Editor State.
+ *
+ * Responsibilities:
+ * - provide global editor state to all workflow definition UI components
+ * - wrap the state engine from Swap 79
+ * - expose a typed hook for consuming editor state
  */
 
+import { createContext, useContext } from "react";
 import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  ReactNode
-} from "react";
-import { WorkflowDefinition } from "./workflow";
+  WorkflowDefinition,
+} from "./workflowDefinitionTypes";
 
-interface WorkflowDefinitionContextValue {
-  definition: WorkflowDefinition | null;
-  setDefinition: (def: WorkflowDefinition) => void;
-  updateDefinition: (partial: Partial<WorkflowDefinition>) => void;
+import {
+  useWorkflowDefinitionEditorState,
+  WorkflowDefinitionEditorState
+} from "./workflowDefinitionEditorState";
+
+/* -------------------------------------------------------
+ * Context
+ * ----------------------------------------------------- */
+
+const WorkflowDefinitionEditorContext =
+  createContext<WorkflowDefinitionEditorState | null>(null);
+
+/* -------------------------------------------------------
+ * Provider
+ * ----------------------------------------------------- */
+
+interface WorkflowDefinitionEditorProviderProps {
+  initial: WorkflowDefinition;
+  children: React.ReactNode;
 }
 
-const WorkflowDefinitionContext = createContext<WorkflowDefinitionContextValue | null>(
-  null
-);
-
-export function WorkflowDefinitionProvider({
-  initial,
-  children
-}: {
-  initial: WorkflowDefinition;
-  children: ReactNode;
-}) {
-  const [definition, setDefinition] = useState<WorkflowDefinition>(initial);
-
-  const updateDefinition = useCallback(
-    (partial: Partial<WorkflowDefinition>) => {
-      setDefinition(prev => ({ ...prev, ...partial }));
-    },
-    []
-  );
+export function WorkflowDefinitionEditorProvider(
+  props: WorkflowDefinitionEditorProviderProps
+) {
+  const state = useWorkflowDefinitionEditorState(props.initial);
 
   return (
-    <WorkflowDefinitionContext.Provider
-      value={{ definition, setDefinition, updateDefinition }}
-    >
-      {children}
-    </WorkflowDefinitionContext.Provider>
+    <WorkflowDefinitionEditorContext.Provider value={state}>
+      {props.children}
+    </WorkflowDefinitionEditorContext.Provider>
   );
 }
 
-export function useWorkflowDefinitionContext() {
-  const ctx = useContext(WorkflowDefinitionContext);
+/* -------------------------------------------------------
+ * Hook
+ * ----------------------------------------------------- */
+
+export function useWorkflowDefinitionEditor() {
+  const ctx = useContext(WorkflowDefinitionEditorContext);
   if (!ctx) {
     throw new Error(
-      "useWorkflowDefinitionContext must be used within a WorkflowDefinitionProvider"
+      "useWorkflowDefinitionEditor must be used inside WorkflowDefinitionEditorProvider"
     );
   }
   return ctx;
