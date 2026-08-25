@@ -1,109 +1,210 @@
 /**
- * Deterministic workflow execution engine for the Valtaris Glue system.
- * Provides step scheduling, trigger processing, instance state transitions,
- * and runtime-safe execution primitives.
+ * WorkflowEngine for the Valtaris Glue runtime.
+ * Executes workflow definitions deterministically:
+ * - task steps
+ * - decision steps
+ * - connector calls
+ * - delay steps
+ * - branching
+ * - metadata propagation
  */
 
-import {
-  Workflow,
-  WorkflowDefinition,
-  WorkflowStep,
-  WorkflowTrigger
-} from "./workflow";
-
-import {
-  WorkflowInstance,
-  WorkflowInstanceStatus,
-  WorkflowStepState
-} from "./workflowInstance";
-
-import { now, generateId } from "../runtime/utils";
-import { PlatformError, wrapError } from "../runtime/errors";
+import { WorkflowDefinition, WorkflowStep } from "./workflow";
+import { WorkflowInstance, WorkflowStepState } from "./workflowInstance";
+import { supabase } from "../runtime/supabase";
+import { wrapError } from "../runtime/errors";
 
 export class WorkflowEngine {
-  async startInstance(
-    workflow: Workflow,
-    definition: WorkflowDefinition
-  ): Promise<WorkflowInstance> {
-    const instance: WorkflowInstance = {
-      id: generateId(),
-      workflowId: workflow.id,
-      version: workflow.activeVersion,
-      organizationId: workflow.organizationId,
-      projectId: workflow.projectId,
-      environmentId: workflow.environmentId,
+  async execute(instance: WorkflowInstance, definition: WorkflowDefinition) {
+    try {
+      const steps = definition.steps;
+      let currentStepId = instance.currentStepId ?? steps[0]?.id;
 
-      status: "running",
-      currentStepId: null,
+      while (currentStepId) {
+        const step = steps.find(s => s.id === currentStepId);
+        if (!step) throw new Error(`Step not found: ${currentStepId}`);
 
-      createdAt: now(),
-      startedAt: now(),
-      updatedAt: now(),
-      completedAt: null,
+        const state = await this.startStep(instance, step);
 
-      metadata: {}
-    };
+        const result = await this.runStep(step, instance, definition);
 
-    return instance;
+        await this.completeStep(state.id, result);
+
+        currentStepId = this.nextStep(step, result, definition);
+        await this.updateInstance(instance.id, currentStepId, result);
+      }
+
+      await this.finishInstance(instance.id);
+    } catch (err) {
+      throw wrapError(err);
+    }
   }
 
-  async executeStep(
+  // ------------------------------------------------------------
+  // Step Execution
+  // ------------------------------------------------------------
+
+  async runStep(
+    step: WorkflowStep,
     instance: WorkflowInstance,
-    step: WorkflowStep
-  ): Promise<WorkflowStepState> {
-    const state: WorkflowStepState = {
-      id: generateId(),
+    definition: WorkflowDefinition
+  ): Promise<any> {
+    switch (step.type) {
+      case "task":
+        return await this.runTask(step, instance);
+
+      case "decision":
+        return await this.runDecision(step, instance);
+
+      case "connector_call":
+        return await this.runConnectorCall(step, instance);
+
+      case "delay":
+        return await this.runDelay(step);
+
+      case "branch":
+        return await this.runBranch(step, instance);
+
+      default:
+        throw new Error(`Unknown step type: ${step.type}`);
+    }
+  }
+
+  // ------------------------------------------------------------
+  // Step Type Implementations
+  // ------------------------------------------------------------
+
+  async runTask(step: WorkflowStep, instance: WorkflowInstance) {
+    return {
+      status: "completed",
+      output: step.config ?? {}
+    };
+  }
+
+  async runDecision(step: WorkflowStep, instance: WorkflowInstance) {
+    const condition = step.config?.condition;
+    const result = Boolean(condition);
+    return { status: "completed", output: { result } };
+  }
+
+  async runConnectorCall(step: WorkflowStep, instance: WorkflowInstance) {
+    const endpoint = step.config?.endpoint;
+    const payload = step.config?.payload ?? {};
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const json = await res.json();
+
+    return {
+      status: "completed",
+      output: json
+    };
+  }
+
+  async runDelay(step: WorkflowStep) {
+    const ms = step.config?.ms ?? 0;
+    await new Promise(resolve => setTimeout(resolve, ms));
+    return { status: "completed", output: { delayed: ms } };
+  }
+
+  async runBranch(step: WorkflowStep, instance: WorkflowInstance) {
+    const branch = step.config?.branch;
+    return { status: "completed", output: { branch } };
+  }
+
+  // ------------------------------------------------------------
+  // Step State Management
+  // ------------------------------------------------------------
+
+  async startStep(instance: WorkflowInstance, step: WorkflowStep) {
+    const state: Partial<WorkflowStepState> = {
+      id: crypto.randomUUID(),
+      instanceId: instance.id,
       stepId: step.id,
       status: "running",
-      startedAt: now(),
-      completedAt: null,
-      output: null,
-      error: null,
+      startedAt: new Date().toISOString(),
       metadata: {}
     };
 
-    try {
-      // Deterministic placeholder for actual step execution logic.
-      // Glue runtime will plug in connector calls, decisions, delays, etc.
-      state.output = { executed: true };
-      state.status = "completed";
-      state.completedAt = now();
-    } catch (err) {
-      const wrapped = wrapError(err);
-      state.status = "failed";
-      state.error = { code: wrapped.code, message: wrapped.message };
-      state.completedAt = now();
-    }
+    const { data, error } = await supabase
+      .from("workflow_step_states")
+      .insert(state)
+      .select()
+      .single();
 
-    instance.updatedAt = now();
-    instance.currentStepId = step.id;
-
-    if (state.status === "failed") {
-      instance.status = "failed";
-      instance.completedAt = now();
-    }
-
-    return state;
+    if (error) throw error;
+    return data;
   }
 
-  async run(
-    workflow: Workflow,
+  async completeStep(stateId: string, result: any) {
+    const { error } = await supabase
+      .from("workflow_step_states")
+      .update({
+        status: result.status,
+        completedAt: new Date().toISOString(),
+        output: result.output ?? null
+      })
+      .eq("id", stateId);
+
+    if (error) throw error;
+  }
+
+  // ------------------------------------------------------------
+  // Instance Management
+  // ------------------------------------------------------------
+
+  async updateInstance(
+    instanceId: string,
+    nextStepId: string | null,
+    result: any
+  ) {
+    const { error } = await supabase
+      .from("workflow_instances")
+      .update({
+        currentStepId: nextStepId,
+        updatedAt: new Date().toISOString(),
+        metadata: result.output ?? {}
+      })
+      .eq("id", instanceId);
+
+    if (error) throw error;
+  }
+
+  async finishInstance(instanceId: string) {
+    const { error } = await supabase
+      .from("workflow_instances")
+      .update({
+        status: "completed",
+        completedAt: new Date().toISOString()
+      })
+      .eq("id", instanceId);
+
+    if (error) throw error;
+  }
+
+  // ------------------------------------------------------------
+  // Step Navigation
+  // ------------------------------------------------------------
+
+  nextStep(
+    step: WorkflowStep,
+    result: any,
     definition: WorkflowDefinition
-  ): Promise<WorkflowInstance> {
-    const instance = await this.startInstance(workflow, definition);
-
-    for (const step of definition.steps) {
-      const state = await this.executeStep(instance, step);
-
-      if (state.status === "failed") {
-        return instance;
-      }
+  ): string | null {
+    if (step.type === "decision") {
+      return result.output.result
+        ? step.config?.trueNext
+        : step.config?.falseNext;
     }
 
-    instance.status = "completed";
-    instance.completedAt = now();
-    instance.updatedAt = now();
+    if (step.type === "branch") {
+      return step.config?.branches?.[result.output.branch] ?? null;
+    }
 
-    return instance;
+    return step.config?.next ?? null;
   }
 }
