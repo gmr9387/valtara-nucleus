@@ -1,0 +1,65 @@
+/**
+ * Workflow execution UI for the Valtaris Glue control plane.
+ * Provides deterministic execution requests, instance result
+ * rendering, and integration with the Glue runtime.
+ */
+
+import { useState } from "react";
+import { WorkflowInstance } from "./workflowInstance";
+
+interface WorkflowExecuteProps {
+  workflowId: string;
+  organizationId: string;
+  projectId: string;
+  environmentId: string;
+  userId: string;
+}
+
+export function WorkflowExecute(props: WorkflowExecuteProps) {
+  const [instance, setInstance] = useState<WorkflowInstance | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function execute() {
+    setLoading(true);
+
+    const res = await fetch(`/workflows/execute`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        workflowId: props.workflowId,
+        organizationId: props.organizationId,
+        projectId: props.projectId,
+        environmentId: props.environmentId,
+        userId: props.userId
+      })
+    });
+
+    const data = await res.json();
+    setInstance(data);
+    setLoading(false);
+  }
+
+  return (
+    <div className="workflow-execute">
+      <h2>Execute Workflow</h2>
+
+      <button onClick={execute} disabled={loading}>
+        {loading ? "Executing…" : "Run Workflow"}
+      </button>
+
+      {instance && (
+        <div className="workflow-instance-result">
+          <h3>Execution Result</h3>
+          <div>Status: {instance.status}</div>
+          <div>Instance ID: {instance.id}</div>
+          <div>Workflow ID: {instance.workflowId}</div>
+          <div>Version: {instance.version}</div>
+          <div>Started: {instance.startedAt}</div>
+          <div>Completed: {instance.completedAt ?? "Not completed"}</div>
+
+          <pre>{JSON.stringify(instance.metadata, null, 2)}</pre>
+        </div>
+      )}
+    </div>
+  );
+}
