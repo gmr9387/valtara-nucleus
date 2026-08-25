@@ -1,28 +1,34 @@
 /**
- * Workflow definition routes for the Valtaris Glue control plane.
- * Provides deterministic route registration for loading and saving
- * workflow definitions.
+ * workflowDefinitionRoutes.ts
+ *
+ * Route definitions for the Workflow Definition subsystem.
+ *
+ * Responsibilities:
+ * - define /glue/workflow/definition/:id route
+ * - bind WorkflowDefinitionEditor (Swap 84)
+ * - integrate with Nucleus router
  */
 
-import { router } from "../server/router";
-import { WorkflowDefinitionController } from "./workflowDefinitionController";
+import { RouteObject } from "react-router-dom";
+import { WorkflowDefinitionEditor } from "./workflowDefinitionEditor";
 
-const controller = new WorkflowDefinitionController();
-
-// Load workflow definition
-router.register({
-  path: "/workflow/definition/load",
-  method: "GET",
-  handler: async (ctx, req) => {
-    return controller.load(ctx, req);
+export const workflowDefinitionRoutes: RouteObject[] = [
+  {
+    path: "/glue/workflow/definition/:id",
+    element: <WorkflowDefinitionEditorWrapper />
   }
-});
+];
 
-// Save workflow definition (creates new version)
-router.register({
-  path: "/workflow/definition/save",
-  method: "POST",
-  handler: async (ctx, req) => {
-    return controller.save(ctx, req);
+/**
+ * Wrapper to extract route params and pass them to the editor.
+ */
+import { useParams } from "react-router-dom";
+
+function WorkflowDefinitionEditorWrapper() {
+  const { id } = useParams();
+  if (!id) {
+    return <div>Workflow definition ID missing.</div>;
   }
-});
+
+  return <WorkflowDefinitionEditor workflowId={id} />;
+}
