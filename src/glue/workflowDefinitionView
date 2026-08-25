@@ -1,0 +1,63 @@
+/**
+ * Workflow Definition View for the Valtaris Glue workflow builder.
+ * Provides a unified, deterministic UI for editing workflow definitions,
+ * integrating context, editors, and save hooks.
+ */
+
+import { WorkflowDefinitionProvider } from "./workflowDefinitionContext";
+import { WorkflowDefinitionEditor } from "./workflowDefinitionEditor";
+import { useWorkflowDefinition, useSaveWorkflowDefinition } from "./workflowDefinitionHooks";
+import { WorkflowDefinition } from "./workflow";
+
+interface WorkflowDefinitionViewProps {
+  workflowId: string;
+  version: number;
+  userId: string;
+}
+
+export function WorkflowDefinitionView(props: WorkflowDefinitionViewProps) {
+  const { definition, loading, error, setDefinition } = useWorkflowDefinition(
+    props.workflowId,
+    props.version
+  );
+
+  const { save, saving, result } = useSaveWorkflowDefinition(
+    props.workflowId,
+    props.userId
+  );
+
+  if (loading) {
+    return <div>Loading workflow definition…</div>;
+  }
+
+  if (error || !definition) {
+    return <div>Error loading definition: {error ?? "Unknown error"}</div>;
+  }
+
+  function handleSave() {
+    save(definition as WorkflowDefinition);
+  }
+
+  return (
+    <WorkflowDefinitionProvider initial={definition}>
+      <div className="workflow-definition-view">
+        <h2>Workflow Definition Editor</h2>
+
+        <WorkflowDefinitionEditor
+          definition={definition}
+          onChange={setDefinition}
+        />
+
+        <button onClick={handleSave} disabled={saving}>
+          {saving ? "Saving…" : "Save Definition"}
+        </button>
+
+        {result && (
+          <div className="save-result">
+            <strong>Saved new version:</strong> {result.version}
+          </div>
+        )}
+      </div>
+    </WorkflowDefinitionProvider>
+  );
+}
