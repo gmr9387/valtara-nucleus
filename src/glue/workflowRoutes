@@ -1,0 +1,46 @@
+/**
+ * Workflow routes for the Valtaris control plane.
+ * Provides deterministic route registration and typed
+ * controller bindings for workflow operations.
+ */
+
+import { router } from "../server/router";
+import { WorkflowController } from "./workflowController";
+
+const controller = new WorkflowController();
+
+// List workflows
+router.register({
+  path: "/workflows",
+  method: "GET",
+  handler: async (ctx, req) => {
+    return controller.list(ctx, req);
+  }
+});
+
+// Create workflow
+router.register({
+  path: "/workflows/create",
+  method: "POST",
+  handler: async (ctx, req) => {
+    return controller.create(ctx, req);
+  }
+});
+
+// Get workflow by ID
+router.register({
+  path: "/workflows/get",
+  method: "GET",
+  handler: async (ctx, req) => {
+    return controller.get(ctx, req);
+  }
+});
+
+// Execute workflow
+router.register({
+  path: "/workflows/execute",
+  method: "POST",
+  handler: async (ctx, req) => {
+    return controller.execute(ctx, req);
+  }
+});
