@@ -1,0 +1,59 @@
+/**
+ * Workflow definition controller for the Valtaris Glue control plane.
+ * Provides deterministic endpoints for loading and saving workflow
+ * definitions and creating new workflow versions.
+ */
+
+import { WorkflowDefinitionService } from "./workflowDefinitionService";
+import { WorkflowService } from "./workflowService";
+import { wrapError } from "../runtime/errors";
+
+export class WorkflowDefinitionController {
+  private definitions: WorkflowDefinitionService;
+  private workflows: WorkflowService;
+
+  constructor() {
+    this.definitions = new WorkflowDefinitionService();
+    this.workflows = new WorkflowService();
+  }
+
+  async load(ctx: any, req: Request): Promise<Response> {
+    try {
+      const url = new URL(req.url);
+      const workflowId = url.searchParams.get("workflowId");
+      const version = Number(url.searchParams.get("version"));
+
+      if (!workflowId || !version) {
+        return new Response("Missing workflowId or version", { status: 400 });
+      }
+
+      const definition = await this.definitions.load(workflowId, version);
+      return new Response(JSON.stringify(definition), { status: 200 });
+    } catch (err) {
+      const wrapped = wrapError(err);
+      return new Response(JSON.stringify(wrapped), { status: 500 });
+    }
+  }
+
+  async save(ctx: any, req: Request): Promise<Response> {
+    try {
+      const body = await req.json();
+
+      const workflowId = body.workflowId;
+      const definition = body.definition;
+      const userId = body.userId ?? ctx.userId ?? "system";
+
+      if (!workflowId || !definition) {
+        return new Response("Missing workflowId or definition", { status: 400 });
+      }
+
+      const workflow = await this.workflows.get(ctx, workflowId);
+      const version = await this.definitions.save(workflow, definition, userId);
+
+      return new Response(JSON.stringify(version), { status: 201 });
+    } catch (err) {
+      const wrapped = wrapError(err);
+      return new Response(JSON.stringify(wrapped), { status: 500 });
+    }
+  }
+}
