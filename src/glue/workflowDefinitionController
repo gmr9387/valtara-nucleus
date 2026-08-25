@@ -1,59 +1,86 @@
 /**
- * Workflow definition controller for the Valtaris Glue control plane.
- * Provides deterministic endpoints for loading and saving workflow
- * definitions and creating new workflow versions.
+ * workflowDefinitionController.ts
+ *
+ * Top-level orchestrator for the Workflow Definition subsystem.
+ *
+ * Responsibilities:
+ * - load workflow definitions (Swap 76)
+ * - initialize editor provider (Swap 80)
+ * - bind registry + loader + context
+ * - expose deterministic entrypoint for definition editor UI
  */
 
-import { WorkflowDefinitionService } from "./workflowDefinitionService";
-import { WorkflowService } from "./workflowService";
-import { wrapError } from "../runtime/errors";
+import { useEffect, useState } from "react";
 
-export class WorkflowDefinitionController {
-  private definitions: WorkflowDefinitionService;
-  private workflows: WorkflowService;
+import { WorkflowDefinition } from "./workflowDefinitionTypes";
+import { registryLoad } from "./workflowDefinitionRegistry";
+import { WorkflowDefinitionEditorProvider } from "./workflowDefinitionContext";
 
-  constructor() {
-    this.definitions = new WorkflowDefinitionService();
-    this.workflows = new WorkflowService();
-  }
+interface WorkflowDefinitionControllerProps {
+  workflowId: string;
+  children: React.ReactNode;
+}
 
-  async load(ctx: any, req: Request): Promise<Response> {
-    try {
-      const url = new URL(req.url);
-      const workflowId = url.searchParams.get("workflowId");
-      const version = Number(url.searchParams.get("version"));
+export function WorkflowDefinitionController(
+  props: WorkflowDefinitionControllerProps
+) {
+  const { workflowId, children } = props;
 
-      if (!workflowId || !version) {
-        return new Response("Missing workflowId or version", { status: 400 });
+  const [definition, setDefinition] = useState<WorkflowDefinition | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  /* -------------------------------------------------------
+   * Load definition from registry + Supabase
+   * ----------------------------------------------------- */
+  useEffect(() => {
+    let mounted = true;
+
+    async function load() {
+      setLoading(true);
+
+      const result = await registryLoad(workflowId);
+
+      if (!mounted) return;
+
+      if (!result.success || !result.definition) {
+        setError(result.error ?? "Failed to load workflow definition.");
+        setLoading(false);
+        return;
       }
 
-      const definition = await this.definitions.load(workflowId, version);
-      return new Response(JSON.stringify(definition), { status: 200 });
-    } catch (err) {
-      const wrapped = wrapError(err);
-      return new Response(JSON.stringify(wrapped), { status: 500 });
+      setDefinition(result.definition);
+      setLoading(false);
     }
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
+  }, [workflowId]);
+
+  /* -------------------------------------------------------
+   * Render states
+   * ----------------------------------------------------- */
+  if (loading) {
+    return <div>Loading workflow definition…</div>;
   }
 
-  async save(ctx: any, req: Request): Promise<Response> {
-    try {
-      const body = await req.json();
-
-      const workflowId = body.workflowId;
-      const definition = body.definition;
-      const userId = body.userId ?? ctx.userId ?? "system";
-
-      if (!workflowId || !definition) {
-        return new Response("Missing workflowId or definition", { status: 400 });
-      }
-
-      const workflow = await this.workflows.get(ctx, workflowId);
-      const version = await this.definitions.save(workflow, definition, userId);
-
-      return new Response(JSON.stringify(version), { status: 201 });
-    } catch (err) {
-      const wrapped = wrapError(err);
-      return new Response(JSON.stringify(wrapped), { status: 500 });
-    }
+  if (error) {
+    return <div>Error loading workflow definition: {error}</div>;
   }
+
+  if (!definition) {
+    return <div>Workflow definition not found.</div>;
+  }
+
+  /* -------------------------------------------------------
+   * Provide editor state to children
+   * ----------------------------------------------------- */
+  return (
+    <WorkflowDefinitionEditorProvider initial={definition}>
+      {children}
+    </WorkflowDefinitionEditorProvider>
+  );
 }
