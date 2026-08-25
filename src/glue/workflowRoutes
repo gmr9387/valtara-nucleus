@@ -1,46 +1,115 @@
 /**
- * Workflow routes for the Valtaris control plane.
- * Provides deterministic route registration and typed
- * controller bindings for workflow operations.
+ * Workflow Routes for the Valtaris Glue control plane.
+ * Final integration layer wiring all workflow endpoints:
+ * - metadata
+ * - listing
+ * - execution
+ * - instance retrieval
+ * - step-state retrieval
  */
 
 import { router } from "../server/router";
-import { WorkflowController } from "./workflowController";
+import { supabase } from "../runtime/supabase";
+import { wrapError } from "../runtime/errors";
+import { WorkflowRuntimeController } from "./workflowRuntimeController";
 
-const controller = new WorkflowController();
+const runtime = new WorkflowRuntimeController();
 
-// List workflows
+/* -------------------------------------------------------
+ * WORKFLOW METADATA
+ * ----------------------------------------------------- */
+
+// GET /workflow/get
 router.register({
-  path: "/workflows",
+  path: "/workflow/get",
   method: "GET",
   handler: async (ctx, req) => {
-    return controller.list(ctx, req);
+    try {
+      const url = new URL(req.url);
+      const id = url.searchParams.get("id");
+      if (!id) return new Response("Missing workflow id", { status: 400 });
+
+      const { data, error } = await supabase
+        .from("workflows")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      return new Response(JSON.stringify(data), { status: 200 });
+    } catch (err) {
+      return new Response(JSON.stringify(wrapError(err)), { status: 500 });
+    }
   }
 });
 
-// Create workflow
+// GET /workflow/list
 router.register({
-  path: "/workflows/create",
+  path: "/workflow/list",
+  method: "GET",
+  handler: async () => {
+    try {
+      const { data, error } = await supabase
+        .from("workflows")
+        .select("*")
+        .order("createdAt", { ascending: false });
+
+      if (error) throw error;
+      return new Response(JSON.stringify(data), { status: 200 });
+    } catch (err) {
+      return new Response(JSON.stringify(wrapError(err)), { status: 500 });
+    }
+  }
+});
+
+/* -------------------------------------------------------
+ * WORKFLOW EXECUTION
+ * ----------------------------------------------------- */
+
+// POST /workflow/execute
+router.register({
+  path: "/workflow/execute",
   method: "POST",
   handler: async (ctx, req) => {
-    return controller.create(ctx, req);
+    return runtime.execute(ctx, req);
   }
 });
 
-// Get workflow by ID
+/* -------------------------------------------------------
+ * WORKFLOW INSTANCE
+ * ----------------------------------------------------- */
+
+// GET /workflow/instance/get
 router.register({
-  path: "/workflows/get",
+  path: "/workflow/instance/get",
   method: "GET",
   handler: async (ctx, req) => {
-    return controller.get(ctx, req);
+    return runtime.getInstance(ctx, req);
   }
 });
 
-// Execute workflow
+// GET /workflow/instance/steps
 router.register({
-  path: "/workflows/execute",
-  method: "POST",
+  path: "/workflow/instance/steps",
+  method: "GET",
   handler: async (ctx, req) => {
-    return controller.execute(ctx, req);
+    try {
+      const url = new URL(req.url);
+      const instanceId = url.searchParams.get("instanceId");
+      if (!instanceId) {
+        return new Response("Missing instanceId", { status: 400 });
+      }
+
+      const { data, error } = await supabase
+        .from("workflow_step_states")
+        .select("*")
+        .eq("instanceId", instanceId)
+        .order("startedAt", { ascending: true });
+
+      if (error) throw error;
+      return new Response(JSON.stringify(data), { status: 200 });
+    } catch (err) {
+      return new Response(JSON.stringify(wrapError(err)), { status: 500 });
+    }
   }
 });
