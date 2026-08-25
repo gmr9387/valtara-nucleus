@@ -1,0 +1,109 @@
+/**
+ * Deterministic workflow execution engine for the Valtaris Glue system.
+ * Provides step scheduling, trigger processing, instance state transitions,
+ * and runtime-safe execution primitives.
+ */
+
+import {
+  Workflow,
+  WorkflowDefinition,
+  WorkflowStep,
+  WorkflowTrigger
+} from "./workflow";
+
+import {
+  WorkflowInstance,
+  WorkflowInstanceStatus,
+  WorkflowStepState
+} from "./workflowInstance";
+
+import { now, generateId } from "../runtime/utils";
+import { PlatformError, wrapError } from "../runtime/errors";
+
+export class WorkflowEngine {
+  async startInstance(
+    workflow: Workflow,
+    definition: WorkflowDefinition
+  ): Promise<WorkflowInstance> {
+    const instance: WorkflowInstance = {
+      id: generateId(),
+      workflowId: workflow.id,
+      version: workflow.activeVersion,
+      organizationId: workflow.organizationId,
+      projectId: workflow.projectId,
+      environmentId: workflow.environmentId,
+
+      status: "running",
+      currentStepId: null,
+
+      createdAt: now(),
+      startedAt: now(),
+      updatedAt: now(),
+      completedAt: null,
+
+      metadata: {}
+    };
+
+    return instance;
+  }
+
+  async executeStep(
+    instance: WorkflowInstance,
+    step: WorkflowStep
+  ): Promise<WorkflowStepState> {
+    const state: WorkflowStepState = {
+      id: generateId(),
+      stepId: step.id,
+      status: "running",
+      startedAt: now(),
+      completedAt: null,
+      output: null,
+      error: null,
+      metadata: {}
+    };
+
+    try {
+      // Deterministic placeholder for actual step execution logic.
+      // Glue runtime will plug in connector calls, decisions, delays, etc.
+      state.output = { executed: true };
+      state.status = "completed";
+      state.completedAt = now();
+    } catch (err) {
+      const wrapped = wrapError(err);
+      state.status = "failed";
+      state.error = { code: wrapped.code, message: wrapped.message };
+      state.completedAt = now();
+    }
+
+    instance.updatedAt = now();
+    instance.currentStepId = step.id;
+
+    if (state.status === "failed") {
+      instance.status = "failed";
+      instance.completedAt = now();
+    }
+
+    return state;
+  }
+
+  async run(
+    workflow: Workflow,
+    definition: WorkflowDefinition
+  ): Promise<WorkflowInstance> {
+    const instance = await this.startInstance(workflow, definition);
+
+    for (const step of definition.steps) {
+      const state = await this.executeStep(instance, step);
+
+      if (state.status === "failed") {
+        return instance;
+      }
+    }
+
+    instance.status = "completed";
+    instance.completedAt = now();
+    instance.updatedAt = now();
+
+    return instance;
+  }
+}
