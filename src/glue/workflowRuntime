@@ -1,94 +1,102 @@
 /**
- * Workflow runtime integration layer for the Valtaris Glue engine.
- * Bridges workflow execution with the Nucleus runtime subsystem,
- * providing deterministic runtime envelopes, execution context,
- * and safe execution wrappers.
+ * WorkflowRuntime for the Valtaris Glue engine.
+ * Orchestrates workflow execution:
+ * - loads workflow + definition
+ * - creates workflow instance
+ * - invokes WorkflowEngine
+ * - manages lifecycle events
  */
 
-import { Workflow, WorkflowDefinition } from "./workflow";
-import { WorkflowInstance } from "./workflowInstance";
 import { WorkflowEngine } from "./workflowEngine";
-
-import { RLS, RLSContext } from "../runtime/rls";
-import { RuntimeEvent, RuntimeEventEnvelope } from "../runtime/events";
+import { WorkflowService } from "./workflowService";
+import { WorkflowDefinitionService } from "./workflowDefinitionService";
+import { WorkflowInstance } from "./workflowInstance";
+import { supabase } from "../runtime/supabase";
 import { wrapError } from "../runtime/errors";
-import { now } from "../runtime/utils";
-
-export interface WorkflowRuntimeContext {
-  rls: RLS;
-  metadata: Record<string, unknown>;
-}
 
 export class WorkflowRuntime {
+  private workflows: WorkflowService;
+  private definitions: WorkflowDefinitionService;
   private engine: WorkflowEngine;
 
   constructor() {
+    this.workflows = new WorkflowService();
+    this.definitions = new WorkflowDefinitionService();
     this.engine = new WorkflowEngine();
   }
 
-  private createEvent(
-    type: string,
-    source: string,
-    metadata: Record<string, unknown>
-  ): RuntimeEventEnvelope {
-    return RuntimeEvent.create(type, source, metadata);
-  }
-
+  /**
+   * Execute a workflow by ID.
+   */
   async execute(
-    workflow: Workflow,
-    definition: WorkflowDefinition,
-    rlsContext: RLSContext
+    ctx: any,
+    workflowId: string,
+    userId: string
   ): Promise<WorkflowInstance> {
-    const rls = new RLS(rlsContext);
-
     try {
-      // RLS enforcement
-      rls.enforceAll({
-        organizationId: workflow.organizationId,
-        projectId: workflow.projectId,
-        environmentId: workflow.environmentId
-      });
+      // Load workflow
+      const workflow = await this.workflows.get(ctx, workflowId);
 
-      // Emit workflow start event
-      const startEvent = this.createEvent("workflow_started", "workflow_runtime", {
-        workflowId: workflow.id,
-        version: workflow.activeVersion,
-        timestamp: now()
-      });
-
-      await RuntimeEvent.dispatch(async () => {}, startEvent);
-
-      // Execute workflow
-      const instance = await this.engine.run(workflow, definition);
-
-      // Emit workflow completion event
-      const completionEvent = this.createEvent(
-        instance.status === "completed" ? "workflow_completed" : "workflow_failed",
-        "workflow_runtime",
-        {
-          workflowId: workflow.id,
-          version: workflow.activeVersion,
-          instanceId: instance.id,
-          status: instance.status,
-          timestamp: now()
-        }
+      // Load active definition
+      const definition = await this.definitions.load(
+        workflowId,
+        workflow.activeVersion
       );
 
-      await RuntimeEvent.dispatch(async () => {}, completionEvent);
+      // Create instance
+      const instance = await this.createInstance(workflow, userId);
 
-      return instance;
+      // Run engine
+      await this.engine.execute(instance, definition);
+
+      // Reload final instance state
+      return await this.getInstance(instance.id);
     } catch (err) {
-      const wrapped = wrapError(err);
-
-      const errorEvent = this.createEvent("workflow_runtime_error", "workflow_runtime", {
-        code: wrapped.code,
-        message: wrapped.message,
-        timestamp: now()
-      });
-
-      await RuntimeEvent.dispatch(async () => {}, errorEvent);
-
-      throw wrapped;
+      throw wrapError(err);
     }
+  }
+
+  /**
+   * Create a workflow instance.
+   */
+  async createInstance(workflow: any, userId: string): Promise<WorkflowInstance> {
+    const instance: Partial<WorkflowInstance> = {
+      id: crypto.randomUUID(),
+      workflowId: workflow.id,
+      version: workflow.activeVersion,
+      organizationId: workflow.organizationId,
+      projectId: workflow.projectId,
+      environmentId: workflow.environmentId,
+      status: "running",
+      currentStepId: null,
+      createdAt: new Date().toISOString(),
+      startedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      metadata: {},
+      completedAt: null
+    };
+
+    const { data, error } = await supabase
+      .from("workflow_instances")
+      .insert(instance)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as WorkflowInstance;
+  }
+
+  /**
+   * Fetch a workflow instance by ID.
+   */
+  async getInstance(instanceId: string): Promise<WorkflowInstance> {
+    const { data, error } = await supabase
+      .from("workflow_instances")
+      .select("*")
+      .eq("id", instanceId)
+      .single();
+
+    if (error) throw error;
+    return data as WorkflowInstance;
   }
 }
