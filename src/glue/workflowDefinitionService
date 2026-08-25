@@ -1,0 +1,69 @@
+/**
+ * Workflow definition service for the Valtaris Glue engine.
+ * Provides deterministic loading, saving, and versioning of
+ * workflow definitions without touching SQL directly.
+ */
+
+import { supabase } from "../runtime/supabase";
+import {
+  WorkflowDefinition,
+  WorkflowVersion,
+  Workflow
+} from "./workflow";
+import { wrapError } from "../runtime/errors";
+
+export class WorkflowDefinitionService {
+  async load(workflowId: string, version: number): Promise<WorkflowDefinition> {
+    try {
+      const { data, error } = await supabase
+        .from("workflow_versions")
+        .select("definition")
+        .eq("workflowId", workflowId)
+        .eq("version", version)
+        .single();
+
+      if (error) throw error;
+      return data.definition as WorkflowDefinition;
+    } catch (err) {
+      throw wrapError(err);
+    }
+  }
+
+  async save(
+    workflow: Workflow,
+    definition: WorkflowDefinition,
+    userId: string
+  ): Promise<WorkflowVersion> {
+    try {
+      const newVersion = workflow.activeVersion + 1;
+
+      const versionRecord: Partial<WorkflowVersion> = {
+        id: crypto.randomUUID(),
+        workflowId: workflow.id,
+        version: newVersion,
+        definition,
+        createdAt: new Date().toISOString(),
+        createdBy: userId,
+        metadata: {}
+      };
+
+      const { data, error } = await supabase
+        .from("workflow_versions")
+        .insert(versionRecord)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // update active version
+      await supabase
+        .from("workflows")
+        .update({ activeVersion: newVersion })
+        .eq("id", workflow.id);
+
+      return data as WorkflowVersion;
+    } catch (err) {
+      throw wrapError(err);
+    }
+  }
+}
