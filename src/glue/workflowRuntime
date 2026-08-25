@@ -1,0 +1,94 @@
+/**
+ * Workflow runtime integration layer for the Valtaris Glue engine.
+ * Bridges workflow execution with the Nucleus runtime subsystem,
+ * providing deterministic runtime envelopes, execution context,
+ * and safe execution wrappers.
+ */
+
+import { Workflow, WorkflowDefinition } from "./workflow";
+import { WorkflowInstance } from "./workflowInstance";
+import { WorkflowEngine } from "./workflowEngine";
+
+import { RLS, RLSContext } from "../runtime/rls";
+import { RuntimeEvent, RuntimeEventEnvelope } from "../runtime/events";
+import { wrapError } from "../runtime/errors";
+import { now } from "../runtime/utils";
+
+export interface WorkflowRuntimeContext {
+  rls: RLS;
+  metadata: Record<string, unknown>;
+}
+
+export class WorkflowRuntime {
+  private engine: WorkflowEngine;
+
+  constructor() {
+    this.engine = new WorkflowEngine();
+  }
+
+  private createEvent(
+    type: string,
+    source: string,
+    metadata: Record<string, unknown>
+  ): RuntimeEventEnvelope {
+    return RuntimeEvent.create(type, source, metadata);
+  }
+
+  async execute(
+    workflow: Workflow,
+    definition: WorkflowDefinition,
+    rlsContext: RLSContext
+  ): Promise<WorkflowInstance> {
+    const rls = new RLS(rlsContext);
+
+    try {
+      // RLS enforcement
+      rls.enforceAll({
+        organizationId: workflow.organizationId,
+        projectId: workflow.projectId,
+        environmentId: workflow.environmentId
+      });
+
+      // Emit workflow start event
+      const startEvent = this.createEvent("workflow_started", "workflow_runtime", {
+        workflowId: workflow.id,
+        version: workflow.activeVersion,
+        timestamp: now()
+      });
+
+      await RuntimeEvent.dispatch(async () => {}, startEvent);
+
+      // Execute workflow
+      const instance = await this.engine.run(workflow, definition);
+
+      // Emit workflow completion event
+      const completionEvent = this.createEvent(
+        instance.status === "completed" ? "workflow_completed" : "workflow_failed",
+        "workflow_runtime",
+        {
+          workflowId: workflow.id,
+          version: workflow.activeVersion,
+          instanceId: instance.id,
+          status: instance.status,
+          timestamp: now()
+        }
+      );
+
+      await RuntimeEvent.dispatch(async () => {}, completionEvent);
+
+      return instance;
+    } catch (err) {
+      const wrapped = wrapError(err);
+
+      const errorEvent = this.createEvent("workflow_runtime_error", "workflow_runtime", {
+        code: wrapped.code,
+        message: wrapped.message,
+        timestamp: now()
+      });
+
+      await RuntimeEvent.dispatch(async () => {}, errorEvent);
+
+      throw wrapped;
+    }
+  }
+}
