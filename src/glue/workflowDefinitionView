@@ -1,63 +1,59 @@
 /**
- * Workflow Definition View for the Valtaris Glue workflow builder.
- * Provides a unified, deterministic UI for editing workflow definitions,
- * integrating context, editors, and save hooks.
+ * workflowDefinitionView.tsx
+ *
+ * Main UI view for the Workflow Definition Editor.
+ *
+ * Responsibilities:
+ * - bind editor context state to UI
+ * - render layout shell (sidebar + toolbar + main panel)
+ * - show validation status + dirty indicator
+ * - integrate step list + step editor
  */
 
-import { WorkflowDefinitionProvider } from "./workflowDefinitionContext";
-import { WorkflowDefinitionEditor } from "./workflowDefinitionEditor";
-import { useWorkflowDefinition, useSaveWorkflowDefinition } from "./workflowDefinitionHooks";
-import { WorkflowDefinition } from "./workflow";
+import { useWorkflowDefinitionEditor } from "./workflowDefinitionContext";
 
-interface WorkflowDefinitionViewProps {
-  workflowId: string;
-  version: number;
-  userId: string;
-}
+import { WorkflowDefinitionSidebar } from "./workflowDefinitionSidebar";
+import { WorkflowDefinitionToolbar } from "./workflowDefinitionToolbar";
+import { WorkflowDefinitionStepEditor } from "./workflowDefinitionStepEditor";
 
-export function WorkflowDefinitionView(props: WorkflowDefinitionViewProps) {
-  const { definition, loading, error, setDefinition } = useWorkflowDefinition(
-    props.workflowId,
-    props.version
-  );
-
-  const { save, saving, result } = useSaveWorkflowDefinition(
-    props.workflowId,
-    props.userId
-  );
-
-  if (loading) {
-    return <div>Loading workflow definition…</div>;
-  }
-
-  if (error || !definition) {
-    return <div>Error loading definition: {error ?? "Unknown error"}</div>;
-  }
-
-  function handleSave() {
-    save(definition as WorkflowDefinition);
-  }
+export function WorkflowDefinitionView() {
+  const {
+    definition,
+    validation,
+    dirty,
+    selectedStepId
+  } = useWorkflowDefinitionEditor();
 
   return (
-    <WorkflowDefinitionProvider initial={definition}>
-      <div className="workflow-definition-view">
-        <h2>Workflow Definition Editor</h2>
+    <div className="workflow-definition-view">
+      {/* Toolbar */}
+      <WorkflowDefinitionToolbar />
 
-        <WorkflowDefinitionEditor
-          definition={definition}
-          onChange={setDefinition}
-        />
+      <div className="workflow-definition-layout">
+        {/* Sidebar */}
+        <WorkflowDefinitionSidebar />
 
-        <button onClick={handleSave} disabled={saving}>
-          {saving ? "Saving…" : "Save Definition"}
-        </button>
+        {/* Main Panel */}
+        <div className="workflow-definition-main">
+          {/* Validation Status */}
+          <div className="workflow-definition-status">
+            <span className={validation.valid ? "valid" : "invalid"}>
+              {validation.valid ? "Valid" : "Invalid"}
+            </span>
 
-        {result && (
-          <div className="save-result">
-            <strong>Saved new version:</strong> {result.version}
+            {dirty && <span className="dirty">Unsaved changes</span>}
           </div>
-        )}
+
+          {/* Step Editor */}
+          {selectedStepId ? (
+            <WorkflowDefinitionStepEditor stepId={selectedStepId} />
+          ) : (
+            <div className="workflow-definition-empty">
+              Select a step to edit
+            </div>
+          )}
+        </div>
       </div>
-    </WorkflowDefinitionProvider>
+    </div>
   );
 }
