@@ -1,63 +1,69 @@
 /**
- * Workflow execution UI for the Valtaris Glue control plane.
- * Provides deterministic execution requests, instance result
- * rendering, and integration with the Glue runtime.
+ * Workflow Execute UI for the Valtaris Glue runtime.
+ * Provides deterministic workflow execution:
+ * - execute workflow via POST /workflow/execute
+ * - display resulting instance
+ * - render WorkflowInstanceViewContainer
  */
 
 import { useState } from "react";
-import { WorkflowInstance } from "./workflowInstance";
+import { WorkflowInstanceViewContainer } from "./workflowInstanceViewContainer";
 
 interface WorkflowExecuteProps {
   workflowId: string;
-  organizationId: string;
-  projectId: string;
-  environmentId: string;
   userId: string;
 }
 
 export function WorkflowExecute(props: WorkflowExecuteProps) {
-  const [instance, setInstance] = useState<WorkflowInstance | null>(null);
+  const [instanceId, setInstanceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function execute() {
+  async function executeWorkflow() {
     setLoading(true);
+    setError(null);
 
-    const res = await fetch(`/workflows/execute`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        workflowId: props.workflowId,
-        organizationId: props.organizationId,
-        projectId: props.projectId,
-        environmentId: props.environmentId,
-        userId: props.userId
-      })
-    });
+    try {
+      const res = await fetch("/workflow/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workflowId: props.workflowId,
+          userId: props.userId
+        })
+      });
 
-    const data = await res.json();
-    setInstance(data);
-    setLoading(false);
+      if (!res.ok) {
+        throw new Error(`Execution failed: ${res.status}`);
+      }
+
+      const instance = await res.json();
+      setInstanceId(instance.id);
+    } catch (err: any) {
+      setError(err.message ?? "Failed to execute workflow");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="workflow-execute">
       <h2>Execute Workflow</h2>
 
-      <button onClick={execute} disabled={loading}>
+      <button onClick={executeWorkflow} disabled={loading}>
         {loading ? "Executing…" : "Run Workflow"}
       </button>
 
-      {instance && (
-        <div className="workflow-instance-result">
-          <h3>Execution Result</h3>
-          <div>Status: {instance.status}</div>
-          <div>Instance ID: {instance.id}</div>
-          <div>Workflow ID: {instance.workflowId}</div>
-          <div>Version: {instance.version}</div>
-          <div>Started: {instance.startedAt}</div>
-          <div>Completed: {instance.completedAt ?? "Not completed"}</div>
+      {error && (
+        <div className="execution-error">
+          <strong>Error:</strong> {error}
+        </div>
+      )}
 
-          <pre>{JSON.stringify(instance.metadata, null, 2)}</pre>
+      {instanceId && (
+        <div className="execution-result">
+          <h3>Execution Result</h3>
+          <WorkflowInstanceViewContainer instanceId={instanceId} />
         </div>
       )}
     </div>
