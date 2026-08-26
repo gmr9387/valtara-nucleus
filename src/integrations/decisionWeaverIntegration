@@ -1,0 +1,181 @@
+/**
+ * decisionWeaverIntegration.ts
+ *
+ * Nucleus → Decision Weaver Integration Module
+ *
+ * This module wires Decision Weaver into the Nucleus control plane:
+ * - identity binding
+ * - event bus binding
+ * - contract enforcement
+ * - telemetry
+ * - error reporting
+ */
+
+import { NucleusIdentity } from "./identityBinding";
+import { eventBus, NucleusEvent } from "./eventBus";
+import { contractEngine, NucleusContract } from "./contracts";
+import { telemetryReporter, createLog } from "./telemetry";
+import { errorReporter, createNucleusError } from "./errorModel";
+
+/**
+ * Placeholder Decision Weaver client.
+ *
+ * Later swaps will:
+ * - bind to real Decision Weaver API
+ * - bind to Supabase functions
+ * - bind to rule engine
+ */
+
+const decisionWeaverClient = {
+  async infer(modelId: string, payload: any, identity: NucleusIdentity) {
+    return {
+      modelId,
+      payload,
+      output: { decision: "approved" },
+      identity
+    };
+  },
+
+  async evaluateRule(ruleId: string, payload: any, identity: NucleusIdentity) {
+    return {
+      ruleId,
+      payload,
+      result: true,
+      identity
+    };
+  },
+
+  async simulate(modelId: string, payload: any, identity: NucleusIdentity) {
+    return {
+      modelId,
+      payload,
+      simulation: { path: ["ruleA", "ruleB"], outcome: "approved" },
+      identity
+    };
+  }
+};
+
+/**
+ * Integration Interface
+ */
+
+export interface DecisionWeaverIntegration {
+  infer(modelId: string, payload: any, identity: NucleusIdentity): Promise<any>;
+  evaluateRule(ruleId: string, payload: any, identity: NucleusIdentity): Promise<any>;
+  simulate(modelId: string, payload: any, identity: NucleusIdentity): Promise<any>;
+}
+
+/**
+ * Implementation
+ */
+
+export const decisionWeaverIntegration: DecisionWeaverIntegration = {
+  async infer(modelId, payload, identity) {
+    try {
+      telemetryReporter.log(
+        createLog("decision-weaver", "info", "Inference requested", { modelId })
+      );
+
+      const contract: NucleusContract = {
+        id: `decision-contract-${modelId}`,
+        type: "decision",
+        version: 1,
+        spec: { modelId },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      contractEngine.validateContract(contract);
+
+      const result = await decisionWeaverClient.infer(modelId, payload, identity);
+
+      const event: NucleusEvent = {
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        source: "decision-weaver",
+        type: "decision.completed",
+        context: identity,
+        payload: result
+      };
+
+      await eventBus.publishEvent(event);
+
+      return result;
+    } catch (err: any) {
+      const error = createNucleusError(
+        "decision-weaver",
+        "error",
+        "DECISION_INFERENCE_FAILED",
+        err.message ?? "Inference failed",
+        identity
+      );
+
+      await errorReporter.reportError(error);
+      throw err;
+    }
+  },
+
+  async evaluateRule(ruleId, payload, identity) {
+    try {
+      telemetryReporter.log(
+        createLog("decision-weaver", "info", "Rule evaluation requested", { ruleId })
+      );
+
+      const result = await decisionWeaverClient.evaluateRule(ruleId, payload, identity);
+
+      await eventBus.publishEvent({
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        source: "decision-weaver",
+        type: "decision.rule-evaluated",
+        context: identity,
+        payload: result
+      });
+
+      return result;
+    } catch (err: any) {
+      const error = createNucleusError(
+        "decision-weaver",
+        "error",
+        "DECISION_RULE_FAILED",
+        err.message ?? "Rule evaluation failed",
+        identity
+      );
+
+      await errorReporter.reportError(error);
+      throw err;
+    }
+  },
+
+  async simulate(modelId, payload, identity) {
+    try {
+      telemetryReporter.log(
+        createLog("decision-weaver", "info", "Simulation requested", { modelId })
+      );
+
+      const result = await decisionWeaverClient.simulate(modelId, payload, identity);
+
+      await eventBus.publishEvent({
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        source: "decision-weaver",
+        type: "decision.simulation",
+        context: identity,
+        payload: result
+      });
+
+      return result;
+    } catch (err: any) {
+      const error = createNucleusError(
+        "decision-weaver",
+        "error",
+        "DECISION_SIMULATION_FAILED",
+        err.message ?? "Simulation failed",
+        identity
+      );
+
+      await errorReporter.reportError(error);
+      throw err;
+    }
+  }
+};
