@@ -1,0 +1,185 @@
+/**
+ * guardianIntegration.ts
+ *
+ * Nucleus → Guardian Integration Module
+ *
+ * This module wires Guardian into the Nucleus control plane:
+ * - identity binding
+ * - event bus binding
+ * - contract enforcement
+ * - telemetry
+ * - error reporting
+ */
+
+import { NucleusIdentity } from "./identityBinding";
+import { eventBus, NucleusEvent } from "./eventBus";
+import { contractEngine, NucleusContract } from "./contracts";
+import { telemetryReporter, createLog } from "./telemetry";
+import { errorReporter, createNucleusError } from "./errorModel";
+
+/**
+ * Placeholder Guardian client.
+ *
+ * Later swaps will:
+ * - bind to real Guardian API
+ * - bind to Supabase functions
+ * - bind to rule engine
+ */
+
+const guardianClient = {
+  async evaluateRisk(modelId: string, payload: any, identity: NucleusIdentity) {
+    return {
+      modelId,
+      payload,
+      score: Math.random(),
+      identity
+    };
+  },
+
+  async enforceRule(ruleId: string, payload: any, identity: NucleusIdentity) {
+    return {
+      ruleId,
+      payload,
+      enforced: true,
+      identity
+    };
+  },
+
+  async checkGovernance(policyId: string, payload: any, identity: NucleusIdentity) {
+    return {
+      policyId,
+      payload,
+      compliant: true,
+      identity
+    };
+  }
+};
+
+/**
+ * Integration Interface
+ */
+
+export interface GuardianIntegration {
+  evaluateRisk(modelId: string, payload: any, identity: NucleusIdentity): Promise<any>;
+  enforceRule(ruleId: string, payload: any, identity: NucleusIdentity): Promise<any>;
+  checkGovernance(policyId: string, payload: any, identity: NucleusIdentity): Promise<any>;
+}
+
+/**
+ * Implementation
+ */
+
+export const guardianIntegration: GuardianIntegration = {
+  async evaluateRisk(modelId, payload, identity) {
+    try {
+      telemetryReporter.log(
+        createLog("guardian", "info", "Risk evaluation requested", { modelId })
+      );
+
+      const contract: NucleusContract = {
+        id: `governance-contract-${modelId}`,
+        type: "governance",
+        version: 1,
+        spec: { modelId },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      contractEngine.validateContract(contract);
+
+      const result = await guardianClient.evaluateRisk(modelId, payload, identity);
+
+      const event: NucleusEvent = {
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        source: "guardian",
+        type: "governance.rule-triggered",
+        context: identity,
+        payload: result
+      };
+
+      await eventBus.publishEvent(event);
+
+      return result;
+    } catch (err: any) {
+      const error = createNucleusError(
+        "guardian",
+        "error",
+        "GUARDIAN_RISK_FAILED",
+        err.message ?? "Risk evaluation failed",
+        identity
+      );
+
+      await errorReporter.reportError(error);
+      throw err;
+    }
+  },
+
+  async enforceRule(ruleId, payload, identity) {
+    try {
+      telemetryReporter.log(
+        createLog("guardian", "info", "Rule enforcement requested", { ruleId })
+      );
+
+      const result = await guardianClient.enforceRule(ruleId, payload, identity);
+
+      await eventBus.publishEvent({
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        source: "guardian",
+        type: "governance.enforced",
+        context: identity,
+        payload: result
+      });
+
+      return result;
+    } catch (err: any) {
+      const error = createNucleusError(
+        "guardian",
+        "error",
+        "GUARDIAN_RULE_FAILED",
+        err.message ?? "Rule enforcement failed",
+        identity
+      );
+
+      await errorReporter.reportError(error);
+      throw err;
+    }
+  },
+
+  async checkGovernance(policyId, payload, identity) {
+    try {
+      telemetryReporter.log(
+        createLog("guardian", "info", "Governance check requested", { policyId })
+      );
+
+      const result = await guardianClient.checkGovernance(
+        policyId,
+        payload,
+        identity
+      );
+
+      await eventBus.publishEvent({
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        source: "guardian",
+        type: "governance.violation",
+        context: identity,
+        payload: result
+      });
+
+      return result;
+    } catch (err: any) {
+      const error = createNucleusError(
+        "guardian",
+        "error",
+        "GUARDIAN_GOVERNANCE_FAILED",
+        err.message ?? "Governance check failed",
+        identity
+      );
+
+      await errorReporter.reportError(error);
+      throw err;
+    }
+  }
+};
