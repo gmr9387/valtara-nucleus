@@ -1,64 +1,103 @@
 /**
  * integrationRegistry.ts
  *
- * Central registry of all integrated subsystems (arms) in the Valtaris ecosystem.
+ * Unified Subsystem Registry Expansion
  *
- * Nucleus = head
- * Arms    = Glue, Decision Weaver, Guardian, DualPay, etc.
+ * This registry tracks all subsystem integrations:
+ * - runtime bindings
+ * - definition bindings
+ * - health bindings
+ * - telemetry bindings
+ * - event bindings
+ * - contract bindings
  */
 
-export type IntegratedSubsystemId =
-  | "glue"
-  | "decision-weaver"
-  | "guardian"
-  | "dualpay";
+import { glueRuntimeIntegration } from "./glueRuntimeIntegration";
+import { glueDefinitionIntegration } from "./glueDefinitionIntegration";
 
-export interface IntegratedSubsystem {
-  id: IntegratedSubsystemId;
-  displayName: string;
-  description: string;
-  docsUrl?: string;
-  repoUrl?: string;
-  enabled: boolean;
+import { decisionWeaverIntegration } from "./decisionWeaverIntegration";
+import { decisionWeaverDefinitionIntegration } from "./decisionWeaverDefinitionIntegration";
+
+import { guardianIntegration } from "./guardianIntegration";
+import { guardianDefinitionIntegration } from "./guardianDefinitionIntegration";
+
+import { dualPayIntegration } from "./dualPayIntegration";
+import { dualPayLedgerDefinitionIntegration } from "./dualPayDefinitionIntegration";
+
+import { subsystemHealth } from "./subsystemHealth";
+
+export interface SubsystemRegistration {
+  id: string;
+  runtime?: any;
+  definition?: any;
+  health?: any;
+  telemetry?: any;
+  events?: any;
+  contracts?: any;
 }
 
-export const integratedSubsystems: IntegratedSubsystem[] = [
-  {
-    id: "glue",
-    displayName: "Glue (Workflow Engine)",
-    description: "Deterministic workflow orchestration and authoring.",
-    repoUrl: "https://github.com/gmr9387/valtaris-nucleus",
-    enabled: true
-  },
-  {
-    id: "decision-weaver",
-    displayName: "Decision Weaver (Decision Intelligence)",
-    description: "Deterministic decision engine, simulation lab, and governance.",
-    repoUrl: "https://github.com/gmr9387/decision-weaver-ai",
-    enabled: true
-  },
-  {
-    id: "guardian",
-    displayName: "Guardian (Risk & Governance)",
-    description: "Rules, risk scoring, and operational governance.",
-    enabled: true
-  },
-  {
-    id: "dualpay",
-    displayName: "DualPay (Payments & Ledgering)",
-    description: "Multi-rail payments, ledgering, and reconciliation.",
-    enabled: true
-  }
-];
+const registry = new Map<string, SubsystemRegistration>();
 
 /**
- * Simple lookup helpers.
+ * Register a subsystem
  */
-
-export function getSubsystem(id: IntegratedSubsystemId) {
-  return integratedSubsystems.find(s => s.id === id) ?? null;
+export function registerSubsystem(subsystem: SubsystemRegistration) {
+  registry.set(subsystem.id, subsystem);
 }
 
-export function listSubsystems() {
-  return integratedSubsystems;
+/**
+ * Retrieve a subsystem
+ */
+export function getSubsystem(id: string): SubsystemRegistration | null {
+  return registry.get(id) ?? null;
 }
+
+/**
+ * Retrieve all subsystems
+ */
+export function getAllSubsystems(): SubsystemRegistration[] {
+  return Array.from(registry.values());
+}
+
+/**
+ * Populate registry with all subsystems
+ */
+registerSubsystem({
+  id: "glue",
+  runtime: glueRuntimeIntegration,
+  definition: glueDefinitionIntegration,
+  health: subsystemHealth,
+  telemetry: "nucleus-telemetry",
+  events: "nucleus-event-bus",
+  contracts: "nucleus-contract-engine"
+});
+
+registerSubsystem({
+  id: "decision-weaver",
+  runtime: decisionWeaverIntegration,
+  definition: decisionWeaverDefinitionIntegration,
+  health: subsystemHealth,
+  telemetry: "nucleus-telemetry",
+  events: "nucleus-event-bus",
+  contracts: "nucleus-contract-engine"
+});
+
+registerSubsystem({
+  id: "guardian",
+  runtime: guardianIntegration,
+  definition: guardianDefinitionIntegration,
+  health: subsystemHealth,
+  telemetry: "nucleus-telemetry",
+  events: "nucleus-event-bus",
+  contracts: "nucleus-contract-engine"
+});
+
+registerSubsystem({
+  id: "dualpay",
+  runtime: dualPayIntegration,
+  definition: dualPayLedgerDefinitionIntegration,
+  health: subsystemHealth,
+  telemetry: "nucleus-telemetry",
+  events: "nucleus-event-bus",
+  contracts: "nucleus-contract-engine"
+});
