@@ -1,64 +1,37 @@
 /**
- * integrationRegistry.ts
+ * eventBus.ts
  *
- * Central registry of all integrated subsystems (arms) in the Valtaris ecosystem.
+ * Nucleus Event Bus
  *
- * Nucleus = head
- * Arms    = Glue, Decision Weaver, Guardian, DualPay, etc.
+ * Swap 28: Bind event publishing to Supabase RPC layer.
  */
 
-export type IntegratedSubsystemId =
-  | "glue"
-  | "decision-weaver"
-  | "guardian"
-  | "dualpay";
+import { logEvent } from "./supabase/rpc/logEvent";
 
-export interface IntegratedSubsystem {
-  id: IntegratedSubsystemId;
-  displayName: string;
-  description: string;
-  docsUrl?: string;
-  repoUrl?: string;
-  enabled: boolean;
+export interface NucleusEvent {
+  id: string;
+  source: string;
+  type: string;
+  context: any;
+  payload: any;
+  timestamp: string;
 }
 
-export const integratedSubsystems: IntegratedSubsystem[] = [
-  {
-    id: "glue",
-    displayName: "Glue (Workflow Engine)",
-    description: "Deterministic workflow orchestration and authoring.",
-    repoUrl: "https://github.com/gmr9387/valtaris-nucleus",
-    enabled: true
-  },
-  {
-    id: "decision-weaver",
-    displayName: "Decision Weaver (Decision Intelligence)",
-    description: "Deterministic decision engine, simulation lab, and governance.",
-    repoUrl: "https://github.com/gmr9387/decision-weaver-ai",
-    enabled: true
-  },
-  {
-    id: "guardian",
-    displayName: "Guardian (Risk & Governance)",
-    description: "Rules, risk scoring, and operational governance.",
-    enabled: true
-  },
-  {
-    id: "dualpay",
-    displayName: "DualPay (Payments & Ledgering)",
-    description: "Multi-rail payments, ledgering, and reconciliation.",
-    enabled: true
+export const eventBus = {
+  async publishEvent(event: NucleusEvent) {
+    try {
+      // Persist event via Supabase RPC
+      await logEvent(event);
+
+      // (Optional future swaps)
+      // - in-memory listeners
+      // - websocket broadcast
+      // - distributed event routing
+
+      return { status: "ok" };
+    } catch (err: any) {
+      console.error("Failed to publish event:", err);
+      throw err;
+    }
   }
-];
-
-/**
- * Simple lookup helpers.
- */
-
-export function getSubsystem(id: IntegratedSubsystemId) {
-  return integratedSubsystems.find(s => s.id === id) ?? null;
-}
-
-export function listSubsystems() {
-  return integratedSubsystems;
-}
+};
