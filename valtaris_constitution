@@ -1,0 +1,212 @@
+THE SEVEN ARCHITECTURAL LAWS OF THE VALTARA ECOSYSTEM
+LAW 1 — Nucleus: KNOW
+Nucleus is the system of ecosystem state.
+
+Nucleus owns:
+
+the enterprise map
+
+the entity graph
+
+the event graph
+
+the subsystem graph
+
+the capability registry
+
+responsibility boundaries
+
+ecosystem state
+
+“who should respond?” logic
+
+“what happened after invocation?” tracking
+
+Nucleus does not:
+
+discover money
+
+authorize money
+
+execute money
+
+validate domain logic
+
+Nucleus determines:
+
+“Given the state of the ecosystem, which capability should respond?”
+
+Nucleus is the brain.
+
+LAW 2 — Decision Weaver: FIND
+Weaver may discover and recommend.
+Weaver may not authorize or execute.
+
+Weaver hunts across systems for:
+
+financial leakage
+
+underpayments
+
+overpayments
+
+missed recoveries
+
+duplicate transactions
+
+inconsistencies
+
+suspicious relationships
+
+systemic patterns
+
+cross‑system anomalies
+
+unclaimed assets
+
+settlement discrepancies
+
+Weaver produces:
+
+opportunity
+
+evidence
+
+confidence
+
+recommended action
+
+Weaver is the hunter.
+
+LAW 3 — Guardian: ALLOW
+Guardian determines whether a proposed action is permitted under the organization’s financial, security, governance, and authorization policies.
+
+Guardian evaluates:
+
+WHO
+
+WHAT
+
+HOW MUCH
+
+UNDER WHICH POLICY
+
+WITH WHAT AUTHORITY
+
+REQUIRING WHAT APPROVAL
+
+Guardian does not:
+
+discover
+
+execute
+
+investigate
+
+validate domain logic
+
+Guardian is the vault door.
+
+LAW 4 — Glue: DO
+Given an authorized decision, Glue executes the action reliably.
+
+Glue handles:
+
+retries
+
+queues
+
+scheduling
+
+idempotency
+
+state persistence
+
+external APIs
+
+human approvals
+
+callbacks
+
+failures
+
+compensating actions
+
+reconciliation
+
+notifications
+
+Glue does not:
+
+decide
+
+authorize
+
+discover
+
+validate
+
+Glue is the hands.
+
+LAW 5 — DualPay: SPECIALIZE
+DualPay is the healthcare financial specialist.
+
+DualPay owns:
+
+claims
+
+remits
+
+contracts
+
+reimbursement
+
+denials
+
+appeals
+
+healthcare recovery
+
+healthcare reconciliation
+
+DualPay does not:
+
+authorize
+
+execute
+
+discover cross‑system patterns
+
+govern money outside healthcare
+
+DualPay is the domain expert.
+
+LAW 6 — Boundary Integrity
+No subsystem may silently cross another subsystem’s authority boundary.
+
+This means:
+
+Weaver never executes
+
+Weaver never authorizes
+
+DualPay never authorizes
+
+Guardian never executes
+
+Glue never decides
+
+Nucleus never bypasses Guardian
+
+If a subsystem encounters something outside its authority:
+
+It must return it to Nucleus.
+
+This prevents overlap and chaos.
+
+LAW 7 — The Ecosystem Loop
+The Valtara ecosystem operates on a continuous loop:
+
+KNOW → FIND → ALLOW → DO → OBSERVE → KNOW
+
+This loop is the foundation of the platform.
