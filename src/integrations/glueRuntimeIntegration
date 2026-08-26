@@ -1,0 +1,191 @@
+/**
+ * glueRuntimeIntegration.ts
+ *
+ * Nucleus → Glue Runtime Integration Module
+ *
+ * This module wires Glue's workflow runtime into the Nucleus control plane:
+ * - identity binding
+ * - event bus propagation
+ * - telemetry propagation
+ * - error propagation
+ * - contract enforcement
+ */
+
+import { NucleusIdentity } from "./identityBinding";
+import { eventBus, NucleusEvent } from "./eventBus";
+import { telemetryReporter, createLog } from "./telemetry";
+import { errorReporter, createNucleusError } from "./errorModel";
+import { contractEngine, NucleusContract } from "./contracts";
+
+/**
+ * Placeholder Glue runtime client.
+ *
+ * Later swaps will:
+ * - bind to real Glue workflow engine
+ * - bind to Supabase workflow tables
+ * - bind to step executor
+ */
+
+const glueRuntimeClient = {
+  async startWorkflow(workflowId: string, input: any, identity: NucleusIdentity) {
+    return {
+      workflowId,
+      input,
+      status: "started",
+      identity
+    };
+  },
+
+  async executeStep(stepId: string, payload: any, identity: NucleusIdentity) {
+    return {
+      stepId,
+      payload,
+      status: "completed",
+      identity
+    };
+  },
+
+  async completeWorkflow(workflowId: string, identity: NucleusIdentity) {
+    return {
+      workflowId,
+      status: "completed",
+      identity
+    };
+  }
+};
+
+/**
+ * Integration Interface
+ */
+
+export interface GlueRuntimeIntegration {
+  startWorkflow(workflowId: string, input: any, identity: NucleusIdentity): Promise<any>;
+  executeStep(stepId: string, payload: any, identity: NucleusIdentity): Promise<any>;
+  completeWorkflow(workflowId: string, identity: NucleusIdentity): Promise<any>;
+}
+
+/**
+ * Implementation
+ */
+
+export const glueRuntimeIntegration: GlueRuntimeIntegration = {
+  async startWorkflow(workflowId, input, identity) {
+    try {
+      telemetryReporter.log(
+        createLog("glue", "info", "Workflow start requested", { workflowId })
+      );
+
+      const contract: NucleusContract = {
+        id: `workflow-contract-${workflowId}`,
+        type: "workflow",
+        version: 1,
+        spec: { workflowId },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      contractEngine.validateContract(contract);
+
+      const result = await glueRuntimeClient.startWorkflow(
+        workflowId,
+        input,
+        identity
+      );
+
+      const event: NucleusEvent = {
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        source: "glue",
+        type: "workflow.started",
+        context: identity,
+        payload: result
+      };
+
+      await eventBus.publishEvent(event);
+
+      return result;
+    } catch (err: any) {
+      const error = createNucleusError(
+        "glue",
+        "error",
+        "WORKFLOW_START_FAILED",
+        err.message ?? "Workflow start failed",
+        identity
+      );
+
+      await errorReporter.reportError(error);
+      throw err;
+    }
+  },
+
+  async executeStep(stepId, payload, identity) {
+    try {
+      telemetryReporter.log(
+        createLog("glue", "info", "Workflow step execution requested", { stepId })
+      );
+
+      const result = await glueRuntimeClient.executeStep(
+        stepId,
+        payload,
+        identity
+      );
+
+      await eventBus.publishEvent({
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        source: "glue",
+        type: "workflow.step",
+        context: identity,
+        payload: result
+      });
+
+      return result;
+    } catch (err: any) {
+      const error = createNucleusError(
+        "glue",
+        "error",
+        "WORKFLOW_STEP_FAILED",
+        err.message ?? "Workflow step failed",
+        identity
+      );
+
+      await errorReporter.reportError(error);
+      throw err;
+    }
+  },
+
+  async completeWorkflow(workflowId, identity) {
+    try {
+      telemetryReporter.log(
+        createLog("glue", "info", "Workflow completion requested", { workflowId })
+      );
+
+      const result = await glueRuntimeClient.completeWorkflow(
+        workflowId,
+        identity
+      );
+
+      await eventBus.publishEvent({
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        source: "glue",
+        type: "workflow.completed",
+        context: identity,
+        payload: result
+      });
+
+      return result;
+    } catch (err: any) {
+      const error = createNucleusError(
+        "glue",
+        "error",
+        "WORKFLOW_COMPLETION_FAILED",
+        err.message ?? "Workflow completion failed",
+        identity
+      );
+
+      await errorReporter.reportError(error);
+      throw err;
+    }
+  }
+};
