@@ -1,0 +1,94 @@
+// src/nucleus/subsystems/dualpay/dualPayRuntime.ts
+
+import { NucleusEvent } from "../../contracts/NucleusEvent";
+import { subscribe, publishEvent } from "../../events/eventBus";
+
+/**
+ * DualPay Runtime
+ *
+ * Constitutional responsibility:
+ * DualPay = SPECIALIZE
+ *
+ * DualPay may:
+ *   - analyze healthcare reimbursement
+ *   - reconcile remittances
+ *   - identify claim recovery opportunities
+ *
+ * DualPay may NOT:
+ *   - authorize
+ *   - execute
+ *   - discover cross-system patterns
+ */
+
+export function startDualPayRuntime() {
+  // DualPay listens for routed healthcare analysis events
+  subscribe("routed.analyze_healthcare_reimbursement", handleReimbursementAnalysis);
+
+  // DualPay listens for routed remittance reconciliation events
+  subscribe("routed.reconcile_remittance", handleRemittanceReconciliation);
+
+  // DualPay listens for routed claim recovery identification events
+  subscribe("routed.identify_claim_recovery", handleClaimRecovery);
+
+  console.log("[DualPay] Runtime initialized.");
+}
+
+/**
+ * handleReimbursementAnalysis
+ *
+ * Placeholder healthcare reimbursement analysis.
+ */
+async function handleReimbursementAnalysis(event: NucleusEvent) {
+  const analysis = {
+    description: "Healthcare reimbursement analyzed.",
+    evidence: event.payload,
+    variance: 0.12,
+  };
+
+  await publishEvent({
+    ...event,
+    type: "dualpay.reimbursement.analyzed",
+    source: "dualpay",
+    payload: analysis,
+  });
+}
+
+/**
+ * handleRemittanceReconciliation
+ *
+ * Placeholder remittance reconciliation logic.
+ */
+async function handleRemittanceReconciliation(event: NucleusEvent) {
+  const reconciliation = {
+    description: "Remittance reconciliation completed.",
+    evidence: event.payload,
+    discrepanciesFound: 2,
+  };
+
+  await publishEvent({
+    ...event,
+    type: "dualpay.remittance.reconciled",
+    source: "dualpay",
+    payload: reconciliation,
+  });
+}
+
+/**
+ * handleClaimRecovery
+ *
+ * Placeholder claim recovery identification.
+ */
+async function handleClaimRecovery(event: NucleusEvent) {
+  const recovery = {
+    description: "Claim recovery opportunity identified.",
+    evidence: event.payload,
+    estimatedValue: 450,
+  };
+
+  await publishEvent({
+    ...event,
+    type: "dualpay.claim.recovery",
+    source: "dualpay",
+    payload: recovery,
+  });
+}
