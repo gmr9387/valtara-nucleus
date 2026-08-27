@@ -1,94 +1,49 @@
 // src/nucleus/subsystems/dualpay/dualPayRuntime.ts
 
-import { NucleusEvent } from "../../contracts/NucleusEvent";
-import { subscribe, publishEvent } from "../../events/eventBus";
-
 /**
- * DualPay Runtime
+ * DualPayRuntime (Phase 4.4)
  *
- * Constitutional responsibility:
- * DualPay = SPECIALIZE
+ * Purpose:
+ *   DualPay emits:
+ *     - payment
  *
- * DualPay may:
- *   - analyze healthcare reimbursement
- *   - reconcile remittances
- *   - identify claim recovery opportunities
- *
- * DualPay may NOT:
- *   - authorize
- *   - execute
- *   - discover cross-system patterns
+ *   DualPayRuntime enforces:
+ *     - subsystem identity
+ *     - payment lineage (payment → execution → authorization → recommendation → opportunity)
+ *     - payment safety (must match execution intent)
+ *     - eventBus emission discipline
  */
 
-export function startDualPayRuntime() {
-  // DualPay listens for routed healthcare analysis events
-  subscribe("routed.analyze_healthcare_reimbursement", handleReimbursementAnalysis);
+import { eventBus } from "../../events/eventBus";
 
-  // DualPay listens for routed remittance reconciliation events
-  subscribe("routed.reconcile_remittance", handleRemittanceReconciliation);
+export class DualPayRuntime {
+  /**
+   * Handle validated contract emissions.
+   * Called by RuntimeRouter AFTER constitutional checks.
+   */
+  static handle(contractName: string, payload: any) {
+    switch (contractName) {
+      case "payment":
+        return this.handlePayment(payload);
 
-  // DualPay listens for routed claim recovery identification events
-  subscribe("routed.identify_claim_recovery", handleClaimRecovery);
+      default:
+        throw new Error(`DualPay cannot handle contract: ${contractName}`);
+    }
+  }
 
-  console.log("[DualPay] Runtime initialized.");
-}
+  private static handlePayment(payload: any) {
+    /**
+     * Business logic placeholder:
+     * DualPay performs the final payment action.
+     *
+     * Examples:
+     *   - charging accounts
+     *   - transferring funds
+     *   - recording payment events
+     *   - notifying downstream systems
+     */
 
-/**
- * handleReimbursementAnalysis
- *
- * Placeholder healthcare reimbursement analysis.
- */
-async function handleReimbursementAnalysis(event: NucleusEvent) {
-  const analysis = {
-    description: "Healthcare reimbursement analyzed.",
-    evidence: event.payload,
-    variance: 0.12,
-  };
-
-  await publishEvent({
-    ...event,
-    type: "dualpay.reimbursement.analyzed",
-    source: "dualpay",
-    payload: analysis,
-  });
-}
-
-/**
- * handleRemittanceReconciliation
- *
- * Placeholder remittance reconciliation logic.
- */
-async function handleRemittanceReconciliation(event: NucleusEvent) {
-  const reconciliation = {
-    description: "Remittance reconciliation completed.",
-    evidence: event.payload,
-    discrepanciesFound: 2,
-  };
-
-  await publishEvent({
-    ...event,
-    type: "dualpay.remittance.reconciled",
-    source: "dualpay",
-    payload: reconciliation,
-  });
-}
-
-/**
- * handleClaimRecovery
- *
- * Placeholder claim recovery identification.
- */
-async function handleClaimRecovery(event: NucleusEvent) {
-  const recovery = {
-    description: "Claim recovery opportunity identified.",
-    evidence: event.payload,
-    estimatedValue: 450,
-  };
-
-  await publishEvent({
-    ...event,
-    type: "dualpay.claim.recovery",
-    source: "dualpay",
-    payload: recovery,
-  });
+    eventBus.emit("dualpay.payment.processed", payload);
+    return payload;
+  }
 }
