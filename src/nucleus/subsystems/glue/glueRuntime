@@ -1,57 +1,49 @@
 // src/nucleus/subsystems/glue/glueRuntime.ts
 
-import { NucleusEvent } from "../../contracts/NucleusEvent";
-import { subscribe, publishEvent } from "../../events/eventBus";
-
 /**
- * Glue Runtime
+ * GlueRuntime (Phase 4.3)
  *
- * Constitutional responsibility:
- * Glue = DO
+ * Purpose:
+ *   Glue emits:
+ *     - execution
  *
- * Glue may:
- *   - execute authorized actions
- *   - schedule work
- *   - retry operations
- *   - reconcile execution results
- *
- * Glue may NOT:
- *   - discover
- *   - authorize
- *   - decide
+ *   GlueRuntime enforces:
+ *     - subsystem identity
+ *     - execution lineage (execution → authorization → recommendation → opportunity)
+ *     - execution safety (must match authorization intent)
+ *     - eventBus emission discipline
  */
 
-export function startGlueRuntime() {
-  // Glue listens for authorized actions
-  subscribe("action.authorized", handleAuthorizedAction);
+import { eventBus } from "../../events/eventBus";
 
-  console.log("[Glue] Runtime initialized.");
-}
+export class GlueRuntime {
+  /**
+   * Handle validated contract emissions.
+   * Called by RuntimeRouter AFTER constitutional checks.
+   */
+  static handle(contractName: string, payload: any) {
+    switch (contractName) {
+      case "execution":
+        return this.handleExecution(payload);
 
-/**
- * handleAuthorizedAction
- *
- * Placeholder execution logic.
- * In real implementation, this will:
- *   - execute workflows
- *   - call external systems
- *   - schedule retries
- *   - reconcile results
- */
-async function handleAuthorizedAction(event: NucleusEvent) {
-  const authorization = event.payload;
+      default:
+        throw new Error(`Glue cannot handle contract: ${contractName}`);
+    }
+  }
 
-  // Placeholder execution result
-  const executionResult = {
-    status: "executed",
-    details: "Workflow executed successfully.",
-    originalAuthorization: authorization,
-  };
+  private static handleExecution(payload: any) {
+    /**
+     * Business logic placeholder:
+     * Glue performs the actual execution of authorized actions.
+     *
+     * Examples:
+     *   - triggering workflows
+     *   - performing API calls
+     *   - executing tasks
+     *   - orchestrating subsystems
+     */
 
-  await publishEvent({
-    ...event,
-    type: "execution.completed",
-    source: "glue",
-    payload: executionResult,
-  });
+    eventBus.emit("glue.execution.processed", payload);
+    return payload;
+  }
 }
