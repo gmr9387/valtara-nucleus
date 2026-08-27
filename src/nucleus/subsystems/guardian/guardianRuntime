@@ -1,0 +1,59 @@
+// src/nucleus/subsystems/guardian/guardianRuntime.ts
+
+import { NucleusEvent } from "../../contracts/NucleusEvent";
+import { subscribe, publishEvent } from "../../events/eventBus";
+
+/**
+ * Guardian Runtime
+ *
+ * Constitutional responsibility:
+ * Guardian = ALLOW
+ *
+ * Guardian may:
+ *   - evaluate policies
+ *   - enforce thresholds
+ *   - authorize proposed actions
+ *
+ * Guardian may NOT:
+ *   - discover
+ *   - execute
+ *   - move money
+ *   - validate domain logic
+ */
+
+export function startGuardianRuntime() {
+  // Guardian listens for routed authorization events
+  subscribe("routed.authorize_financial_action", handleAuthorizationRequest);
+
+  console.log("[Guardian] Runtime initialized.");
+}
+
+/**
+ * handleAuthorizationRequest
+ *
+ * Placeholder authorization logic.
+ * In real implementation, this will evaluate:
+ *   - policies
+ *   - thresholds
+ *   - actor permissions
+ *   - financial governance rules
+ */
+async function handleAuthorizationRequest(event: NucleusEvent) {
+  const proposed = event.payload;
+
+  // Placeholder: always approve with medium governance strictness
+  const authorization = {
+    permitted: true,
+    reason: "Default policy approval",
+    requiredApprovals: [],
+    governanceLevel: "standard",
+    proposedAction: proposed,
+  };
+
+  await publishEvent({
+    ...event,
+    type: "action.authorized",
+    source: "guardian",
+    payload: authorization,
+  });
+}
