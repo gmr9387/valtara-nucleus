@@ -1,0 +1,98 @@
+// src/nucleus/subsystems/weaver/weaverRuntime.ts
+
+import { NucleusEvent } from "../../contracts/NucleusEvent";
+import { subscribe, publishEvent } from "../../events/eventBus";
+
+/**
+ * Weaver Runtime
+ *
+ * Constitutional responsibility:
+ * Weaver = FIND
+ *
+ * Weaver may:
+ *   - discover
+ *   - analyze
+ *   - correlate
+ *   - detect anomalies
+ *   - identify recovery candidates
+ *   - recommend actions
+ *
+ * Weaver may NOT:
+ *   - authorize
+ *   - execute
+ *   - move money
+ */
+
+export function startWeaverRuntime() {
+  // Weaver listens for routed discovery events
+  subscribe("routed.discover_financial_opportunity", handleDiscoveryEvent);
+
+  // Weaver listens for anomaly detection triggers
+  subscribe("routed.detect_cross_system_anomaly", handleAnomalyEvent);
+
+  // Weaver listens for recovery candidate triggers
+  subscribe("routed.identify_recovery_candidate", handleRecoveryCandidateEvent);
+
+  console.log("[Weaver] Runtime initialized.");
+}
+
+/**
+ * handleDiscoveryEvent
+ *
+ * Basic placeholder logic:
+ * Weaver inspects the event payload and emits an opportunity.
+ */
+async function handleDiscoveryEvent(event: NucleusEvent) {
+  const opportunity = {
+    description: "Potential financial opportunity detected.",
+    evidence: event.payload,
+    confidence: 0.7,
+  };
+
+  await publishEvent({
+    ...event,
+    type: "opportunity.detected",
+    source: "weaver",
+    payload: opportunity,
+  });
+}
+
+/**
+ * handleAnomalyEvent
+ *
+ * Placeholder anomaly detection logic.
+ */
+async function handleAnomalyEvent(event: NucleusEvent) {
+  const anomaly = {
+    description: "Cross-system anomaly detected.",
+    evidence: event.payload,
+    severity: "medium",
+  };
+
+  await publishEvent({
+    ...event,
+    type: "anomaly.detected",
+    source: "weaver",
+    payload: anomaly,
+  });
+}
+
+/**
+ * handleRecoveryCandidateEvent
+ *
+ * Placeholder recovery candidate identification.
+ */
+async function handleRecoveryCandidateEvent(event: NucleusEvent) {
+  const candidate = {
+    description: "Recovery candidate identified.",
+    evidence: event.payload,
+    estimatedValue: 1000,
+  };
+
+  await publishEvent({
+    ...event,
+    type: "recovery.candidate",
+    source: "weaver",
+    payload: candidate,
+  });
+}
