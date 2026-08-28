@@ -88,3 +88,16 @@
     "vite": "^7.3.1"
   }
 }
+{
+  "scripts": {
+    "dev": "bun dev",
+    "build": "bun run build",
+    "lint": "bun run lint",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^2.0.0",
+    "@vitest/coverage-c8": "^2.0.0",
+    "@vitest/ui": "^2.0.0"
+  }
+}
