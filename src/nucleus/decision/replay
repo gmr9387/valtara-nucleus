@@ -1,0 +1,23 @@
+export type ReplayEvent = {
+  at: number;
+  subsystem: string;
+  name: string;
+  payload: any;
+};
+
+export class ReplayEngine {
+  private events: ReplayEvent[] = [];
+
+  record(subsystem: string, name: string, payload: any) {
+    this.events.push({
+      at: Date.now(),
+      subsystem,
+      name,
+      payload,
+    });
+  }
+
+  replay() {
+    return [...this.events];
+  }
+}
