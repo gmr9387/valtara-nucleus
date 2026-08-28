@@ -1,0 +1,44 @@
+// src/nucleus/db/nucleusDBBridge.ts
+
+/**
+ * NucleusDBBridge (Phase 13.4)
+ *
+ * Purpose:
+ *   Bridge NucleusApi → NucleusRepository → Supabase.
+ */
+
+import { NucleusApi } from "../api/nucleusApi";
+import { NucleusDB } from "./nucleusDB";
+import { NucleusRepository } from "./nucleusRepository";
+
+export class NucleusDBBridge {
+  private api: NucleusApi;
+  private repo: NucleusRepository;
+
+  constructor(
+    subsystem: "weaver" | "guardian" | "glue" | "dualpay",
+    organizationId: string,
+    supabaseUrl: string,
+    supabaseKey: string
+  ) {
+    this.api = new NucleusApi(subsystem, organizationId);
+    const db = new NucleusDB(supabaseUrl, supabaseKey);
+    this.repo = new NucleusRepository(db, subsystem, organizationId);
+  }
+
+  async emit(name: string, version: string, payload: any) {
+    // Emit into constitutional runtime
+    this.api.emit(name, version, payload);
+
+    // Persist into Supabase
+    return this.repo.saveContract(name, payload);
+  }
+
+  async lineage() {
+    return this.api.lineage();
+  }
+
+  async finalize() {
+    return this.api.finalize();
+  }
+}
