@@ -17,9 +17,9 @@ export class NucleusDBBridge {
 
   constructor(
     subsystem: "weaver" | "guardian" | "glue" | "dualpay",
-    organizationId: string,
-    supabaseUrl: string,
-    supabaseKey: string
+    organizationId: "bpqukcsaoporhvdtfyza",
+    supabaseUrl: "https://bpqukcsaoporhvdtfyza.supabase.co",
+    supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcXVrY3Nhb3Bvcmh2ZHRmeXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Mjk1MTYsImV4cCI6MjEwMzUwNTUxNn0.IVIepvpXkL0M69UjZguWF3MLpcHhFmjOJmJKvPbTn8I"
   ) {
     this.api = new NucleusApi(subsystem, organizationId);
     const db = new NucleusDB(supabaseUrl, supabaseKey);
