@@ -1,0 +1,48 @@
+import { NucleusQueue } from "./nucleusQueue";
+import fs from "node:fs";
+import path from "node:path";
+
+export class NucleusDurableQueue<T> extends NucleusQueue<T> {
+  private filePath: string;
+
+  constructor(filename = "nucleus-queue.json") {
+    super();
+    this.filePath = path.join(process.cwd(), filename);
+    this.load();
+  }
+
+  override push(item: T) {
+    super.push(item);
+    this.persist();
+  }
+
+  override pop(): T | undefined {
+    const item = super.pop();
+    this.persist();
+    return item;
+  }
+
+  private load() {
+    if (!fs.existsSync(this.filePath)) return;
+    const raw = fs.readFileSync(this.filePath, "utf-8");
+    try {
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          super.push(item as T);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  private persist() {
+    const items: T[] = [];
+    let item: T | undefined;
+    // snapshot without draining
+    // @ts-expect-error internal access
+    items.push(...this["q"]);
+    fs.writeFileSync(this.filePath, JSON.stringify(items));
+  }
+}
