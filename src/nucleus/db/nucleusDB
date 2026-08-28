@@ -15,7 +15,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 export class NucleusDB {
   private client: SupabaseClient;
 
-  constructor(private url: string, private key: string) {
+  constructor(private url: "https://bpqukcsaoporhvdtfyza.supabase.co", private key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcXVrY3Nhb3Bvcmh2ZHRmeXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Mjk1MTYsImV4cCI6MjEwMzUwNTUxNn0.IVIepvpXkL0M69UjZguWF3MLpcHhFmjOJmJKvPbTn8I") {
     this.client = createClient(url, key);
   }
 
