@@ -1,0 +1,21 @@
+export type DecisionInput = {
+  organizationId: string;
+  context: any;
+};
+
+export type DecisionResult = {
+  allowed: boolean;
+  confidence: number;
+  reasons: string[];
+};
+
+export class DecisionExecutor {
+  execute(input: DecisionInput): DecisionResult {
+    // placeholder logic; real policies plug in here
+    return {
+      allowed: true,
+      confidence: 0.9,
+      reasons: ["default-allow"],
+    };
+  }
+}
