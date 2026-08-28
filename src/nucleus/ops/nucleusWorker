@@ -1,0 +1,29 @@
+// src/nucleus/ops/nucleusWorker.ts
+
+/**
+ * NucleusWorker (Phase 10.3)
+ *
+ * Purpose:
+ *   Consume queued contract emissions and process them through NucleusApi.
+ */
+
+import { NucleusApi } from "../api/nucleusApi";
+import { NucleusQueue } from "./nucleusQueue";
+
+export class NucleusWorker {
+  constructor(
+    private queue: NucleusQueue<any>,
+    private subsystem: "weaver" | "guardian" | "glue" | "dualpay",
+    private organizationId: string
+  ) {}
+
+  start() {
+    setInterval(() => {
+      const item = this.queue.pop();
+      if (!item) return;
+
+      const api = new NucleusApi(this.subsystem, this.organizationId);
+      api.emit(item.name, item.version, item.payload);
+    }, 10);
+  }
+}
