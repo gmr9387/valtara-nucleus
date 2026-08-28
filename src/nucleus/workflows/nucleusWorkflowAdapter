@@ -5,9 +5,9 @@ import { NucleusApi } from "../api/nucleusApi";
 
 export class NucleusWorkflowAdapter {
   constructor(
-    private organizationId: string,
-    private supabaseUrl: string,
-    private supabaseKey: string
+    private organizationId: "bpqukcsaoporhvdtfyza",
+    private supabaseUrl: "https://bpqukcsaoporhvdtfyza.supabase.co",
+    private supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcXVrY3Nhb3Bvcmh2ZHRmeXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Mjk1MTYsImV4cCI6MjEwMzUwNTUxNn0.IVIepvpXkL0M69UjZguWF3MLpcHhFmjOJmJKvPbTn8I"
   ) {}
 
   async handleWorkflowEvent(event: {
