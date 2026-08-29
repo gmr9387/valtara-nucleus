@@ -1,12 +1,13 @@
 Valtaris Nucleus
 A Constitutional Runtime for Workflow‑Driven Systems
-Valtaris Nucleus is a constitutional execution engine designed to unify workflow orchestration, subsystem coordination, identity governance, decision evaluation, telemetry, lineage, and background runtime processing into a single coherent platform.
+Executive Summary
+Valtaris Nucleus is a constitutional execution engine that unifies workflow orchestration, subsystem coordination, identity governance, decision evaluation, telemetry, lineage, and background runtime processing into a single coherent platform.
 
-Nucleus provides a deterministic, auditable, and governable foundation for multi‑service systems. It is built for environments where workflows must be:
+It is engineered for environments where workflows must be:
 
-traceable
+deterministic
 
-replayable
+auditable
 
 governed
 
@@ -22,77 +23,40 @@ observable
 
 constitutional
 
-Nucleus is the core of the Valtaris ecosystem — powering Glue, DualPay, Guardian, Weaver, and future subsystems.
+Nucleus is the core of the Valtaris ecosystem — powering Weaver, Guardian, Glue, DualPay, and future subsystems.
 
-Why Nucleus Exists
+1. The Problem Nucleus Solves
 Modern systems are fragmented:
 
-Workflows live in one service
+Problem	Impact
+Workflows live in isolated services	No unified orchestration
+Identity is bolted on	No consistent authorization
+Telemetry is optional	No observability or replay
+Decision logic is scattered	No governance or confidence scoring
+Subsystems operate independently	No constitutional coordination
+Background workers run separately	No unified runtime
+API layers differ across services	No consistent interface
+Lineage is rarely captured	No auditability
 
-Identity lives in another
 
-Telemetry is bolted on
+Nucleus solves all of these simultaneously.
 
-Decision logic is scattered
-
-Subsystems operate independently
-
-Background workers run separately
-
-API layers are inconsistent
-
-Lineage is rarely captured
-
-Governance is an afterthought
-
-Nucleus solves this by providing a single constitutional runtime that governs:
-
-1. Workflow Execution
-Every workflow step becomes a constitutional contract.
-
-2. Subsystem Dispatch
-Weaver, Guardian, Glue, DualPay — unified under one router.
-
-3. Identity Binding
-API keys, service accounts, SCIM, SSO — all integrated.
-
-4. Decision Engine
-Governance rules + confidence scoring + replay.
-
-5. Telemetry & Tracing
-Every event is persisted and observable.
-
-6. Lineage
-Every workflow run produces a complete lineage tree.
-
-7. Background Runtime
-Durable queue + worker pool + subsystem‑level execution.
-
-8. HTTP API Layer
-REST endpoints for workflows, subsystems, lineage, telemetry, decisions.
-
-9. CLI
-nucleus dev, nucleus run, nucleus inspect, nucleus lineage, nucleus telemetry, nucleus decision.
-
-10. Constitution
-A single object that unifies the entire runtime.
-
-Architecture Overview
-Nucleus is built around a constitutional spine:
+2. Constitutional Architecture
+Nucleus is built around a constitutional spine — a deterministic chain of execution that governs every workflow, subsystem event, and decision.
 
 Code
 Workflow Engine
-   ↓
+    ↓
 NucleusApi
-   ↓
+    ↓
 Subsystem Router
-   ↓
+    ↓
 Subsystem Runtime (Weaver / Guardian / Glue / DualPay)
-   ↓
+    ↓
 Nucleus Runtime (Workers + Durable Queue)
-   ↓
+    ↓
 Supabase (Lineage + Telemetry + Events)
-Parallel to this spine:
+Parallel constitutional layers:
 
 Code
 Identity Layer
@@ -104,11 +68,11 @@ Everything is unified under:
 
 Code
 src/nucleus/constitution.ts
-This file is the “brain” of Nucleus.
+This file is the brain of Nucleus.
 
-Core Concepts
-Constitutional Contracts
-Every workflow step is treated as a constitutional event:
+3. Core Concepts
+3.1 Constitutional Contracts
+Every workflow step becomes a constitutional event:
 
 opportunity
 
@@ -134,20 +98,19 @@ identity‑bound
 
 lineage‑tracked
 
-This creates a deterministic audit trail.
+This produces a deterministic audit trail.
 
-Subsystems
+3.2 Subsystems
 Nucleus ships with four constitutional subsystems:
 
-Weaver — opportunity + recommendation
+Subsystem	Purpose
+Weaver	Opportunity + Recommendation
+Guardian	Authorization
+Glue	Execution
+DualPay	Payment
 
-Guardian — authorization
 
-Glue — execution
-
-DualPay — payment
-
-Each subsystem has:
+Each subsystem includes:
 
 a runtime
 
@@ -157,7 +120,7 @@ lineage generation
 
 telemetry emission
 
-Identity Layer
+3.3 Identity Layer
 Nucleus integrates:
 
 API keys
@@ -182,7 +145,7 @@ decision evaluation
 
 runtime execution
 
-Decision Engine
+3.4 Decision Engine
 The decision engine provides:
 
 governance rules
@@ -193,9 +156,9 @@ replay
 
 unified evaluation
 
-This allows Nucleus to enforce:
+This enables:
 
-policy
+policy enforcement
 
 compliance
 
@@ -203,7 +166,7 @@ authorization
 
 risk scoring
 
-Telemetry & Lineage
+3.5 Telemetry & Lineage
 Every event is persisted into Supabase:
 
 nucleus_lineage
@@ -220,7 +183,7 @@ full auditability
 
 full observability
 
-Runtime
+3.6 Background Runtime
 Nucleus includes:
 
 durable queue
@@ -231,7 +194,7 @@ background execution
 
 subsystem‑level runtime
 
-This allows workflows to run:
+Workflows can run:
 
 synchronously
 
@@ -239,7 +202,7 @@ asynchronously
 
 concurrently
 
-HTTP API
+3.7 HTTP API Layer
 Nucleus exposes:
 
 Code
@@ -255,7 +218,7 @@ x-api-key
 x-service-account
 x-org
 x-subsystem
-CLI
+3.8 CLI
 Nucleus ships with a full CLI:
 
 Code
@@ -265,19 +228,7 @@ nucleus inspect org
 nucleus lineage org
 nucleus telemetry org
 nucleus decision context.json
-This allows developers to:
-
-run workflows
-
-inspect lineage
-
-inspect telemetry
-
-evaluate decisions
-
-run the server
-
-Constitution
+3.9 Constitution
 The Constitution is the unified interface:
 
 ts
@@ -286,30 +237,31 @@ const nucleus = new Nucleus("org-1", "weaver");
 await nucleus.runWorkflow(definition);
 await nucleus.dispatch("authorization", "v1", payload);
 await nucleus.emit("execution", "v1", payload);
+
 nucleus.evaluate(context);
 nucleus.startRuntime();
 nucleus.enqueue("payment", "v1", payload);
 This is the single source of truth for the entire runtime.
 
-Design Principles
+4. Design Principles
 Nucleus is built on five constitutional principles:
 
-1. Determinism
+Determinism
 Every workflow run produces the same lineage.
 
-2. Governance
+Governance
 Every decision is governed by explicit rules.
 
-3. Identity
+Identity
 Every action is identity‑bound.
 
-4. Observability
+Observability
 Every event is traced, persisted, and replayable.
 
-5. Constitution
+Constitution
 Every subsystem operates under a unified constitutional runtime.
 
-Use Cases
+5. Use Cases
 Enterprise Workflow Engines
 Replace brittle workflow systems with a constitutional runtime.
 
@@ -325,7 +277,7 @@ Weaver + Glue provide opportunity + execution coordination.
 Multi‑Service Platforms
 Nucleus unifies subsystem execution under one constitutional spine.
 
-Why Nucleus Is Different
+6. Why Nucleus Is Different
 Most workflow engines are:
 
 stateless
@@ -363,7 +315,7 @@ constitutionally structured
 This is not a workflow engine.
 This is a constitutional runtime.
 
-Project Structure
+7. Project Structure
 Code
 src/
   nucleus/
@@ -376,13 +328,15 @@ src/
     subsystems/
     constitution.ts
     index.ts
+
   lib/
     workflows/
+
 server.ts
 nucleus (executable)
 package.json
 .env
-Getting Started
+8. Getting Started
 Run the server
 Code
 nucleus dev
@@ -398,11 +352,11 @@ nucleus telemetry org-1
 Evaluate a decision
 Code
 nucleus decision context.json
-Status
+9. Status
 Nucleus is currently in active development as part of the Valtaris ecosystem.
 
-License
+10. License
 MIT (or your preferred license — add later)
 
-Author
-George (Valtaris Systems)
+11. Author
+George — Valtaris Systems
