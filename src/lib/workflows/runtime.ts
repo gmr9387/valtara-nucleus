@@ -1,24 +1,35 @@
-// Phase 14.2 — Wire workflow engine → Nucleus
+// src/lib/workflows/runtime.ts
+// Full file swap — Phase 14 unified workflow → Nucleus execution path
 
 import { NucleusWorkflowAdapter } from "../../nucleus/workflows/nucleusWorkflowAdapter";
 
-export async function startWorkflow(workflow, supabase, organizationId) {
+export async function startWorkflow(workflow: any, organizationId: string) {
   const adapter = new NucleusWorkflowAdapter(
     organizationId,
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_KEY!
+    process.env.VITE_NUCLEUS_SUPABASE_URL!,
+    process.env.VITE_NUCLEUS_SUPABASE_ANON_KEY!
   );
 
+  const results: any[] = [];
+
   for (const step of workflow.steps) {
-    await adapter.handleWorkflowEvent({
+    const event = {
       type: step.type,
       version: step.version,
       payload: {
         ...step.payload,
         organizationId,
       },
-    });
+    };
+
+    const lineage = await adapter.handleWorkflowEvent(event);
+    results.push(lineage);
   }
 
-  return { ok: true };
+  return {
+    ok: true,
+    workflowId: workflow.id,
+    steps: workflow.steps.length,
+    lineage: results,
+  };
 }
