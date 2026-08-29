@@ -1,5 +1,9 @@
+// src/nucleus/decision/executor.ts
+// Full file swap — Core decision executor
+
 export type DecisionInput = {
   organizationId: string;
+  subsystem: string;
   context: any;
 };
 
@@ -9,13 +13,13 @@ export type DecisionResult = {
   reasons: string[];
 };
 
-export class DecisionExecutor {
+export class Executor {
   execute(input: DecisionInput): DecisionResult {
-    // placeholder logic; real policies plug in here
+    // Base decision logic — governance + confidence refine this
     return {
       allowed: true,
       confidence: 0.9,
-      reasons: ["default-allow"],
+      reasons: ["base-allow"],
     };
   }
 }
