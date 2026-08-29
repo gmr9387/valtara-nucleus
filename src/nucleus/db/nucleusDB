@@ -1,33 +1,28 @@
 // src/nucleus/db/nucleusDB.ts
-
-/**
- * NucleusDB (Phase 13.1)
- *
- * Purpose:
- *   Provide a lightweight Supabase client wrapper for:
- *     - contract inserts
- *     - lineage queries
- *     - RLS-safe operations
- */
+// Full file swap — Nucleus Supabase client
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 export class NucleusDB {
   private client: SupabaseClient;
 
-  constructor(private url: "https://bpqukcsaoporhvdtfyza.supabase.co", private key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcXVrY3Nhb3Bvcmh2ZHRmeXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Mjk1MTYsImV4cCI6MjEwMzUwNTUxNn0.IVIepvpXkL0M69UjZguWF3MLpcHhFmjOJmJKvPbTn8I") {
-    this.client = createClient(url, key);
-  }
+  constructor() {
+    const url = process.env.VITE_NUCLEUS_SUPABASE_URL;
+    const serviceRole = process.env.NUCLEUS_SUPABASE_SERVICE_ROLE_KEY;
 
-  insert(table: string, payload: any) {
-    return this.client.from(table).insert(payload);
-  }
-
-  select(table: string, filters: Record<string, any>) {
-    let query = this.client.from(table).select("*");
-    for (const key of Object.keys(filters)) {
-      query = query.eq(key, filters[key]);
+    if (!url) {
+      throw new Error("Missing VITE_NUCLEUS_SUPABASE_URL");
     }
-    return query;
+    if (!serviceRole) {
+      throw new Error("Missing NUCLEUS_SUPABASE_SERVICE_ROLE_KEY");
+    }
+
+    this.client = createClient(url, serviceRole, {
+      auth: { persistSession: false },
+    });
+  }
+
+  getClient() {
+    return this.client;
   }
 }
