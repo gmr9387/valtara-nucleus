@@ -1,3 +1,6 @@
+// src/nucleus/decision/replay.ts
+// Full file swap — Decision replay engine
+
 export type ReplayEvent = {
   at: number;
   subsystem: string;
@@ -5,7 +8,7 @@ export type ReplayEvent = {
   payload: any;
 };
 
-export class ReplayEngine {
+export class Replay {
   private events: ReplayEvent[] = [];
 
   record(subsystem: string, name: string, payload: any) {
