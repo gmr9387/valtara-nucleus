@@ -24,7 +24,7 @@ create table if not exists recommendation (
 create index if not exists idx_recommendation_org on recommendation (organization_id);
 
 
-create table if not exists authorization (
+create table if not exists authorization_contract (
   id uuid primary key default gen_random_uuid(),
   organization_id text not null,
   version text not null,
@@ -32,7 +32,7 @@ create table if not exists authorization (
   created_at timestamptz default now()
 );
 
-create index if not exists idx_authorization_org on authorization (organization_id);
+create index if not exists idx_authorization_org on authorization_contract (organization_id);
 
 
 create table if not exists execution (
