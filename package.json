@@ -101,3 +101,8 @@
     "@vitest/ui": "^2.0.0"
   }
 }
+{
+  "bin": {
+    "nucleus": "./nucleus"
+  }
+}
