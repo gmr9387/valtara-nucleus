@@ -1,44 +1,106 @@
-// src/nucleus/db/nucleusDBBridge.ts
+// src/nucleus/db/nucleusDbBridge.ts
+// Full file swap — Nucleus DB persistence layer
 
-/**
- * NucleusDBBridge (Phase 13.4)
- *
- * Purpose:
- *   Bridge NucleusApi → NucleusRepository → Supabase.
- */
-
-import { NucleusApi } from "../api/nucleusApi";
 import { NucleusDB } from "./nucleusDB";
-import { NucleusRepository } from "./nucleusRepository";
 
 export class NucleusDBBridge {
-  private api: NucleusApi;
-  private repo: NucleusRepository;
+  private db = new NucleusDB().getClient();
 
-  constructor(
-    subsystem: "weaver" | "guardian" | "glue" | "dualpay",
-    organizationId: "bpqukcsaoporhvdtfyza",
-    supabaseUrl: "https://bpqukcsaoporhvdtfyza.supabase.co",
-    supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcXVrY3Nhb3Bvcmh2ZHRmeXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5Mjk1MTYsImV4cCI6MjEwMzUwNTUxNn0.IVIepvpXkL0M69UjZguWF3MLpcHhFmjOJmJKvPbTn8I"
+  async insertContract(
+    table: string,
+    organizationId: string,
+    version: string,
+    payload: any
   ) {
-    this.api = new NucleusApi(subsystem, organizationId);
-    const db = new NucleusDB(supabaseUrl, supabaseKey);
-    this.repo = new NucleusRepository(db, subsystem, organizationId);
+    const { error } = await this.db.from(table).insert({
+      organization_id: organizationId,
+      version,
+      payload,
+    });
+
+    if (error) {
+      console.error("NucleusDBBridge.insertContract error:", error);
+      throw error;
+    }
   }
 
-  async emit(name: string, version: string, payload: any) {
-    // Emit into constitutional runtime
-    this.api.emit(name, version, payload);
+  async insertLineage(
+    organizationId: string,
+    chain: any,
+    finalized: boolean = false
+  ) {
+    const { error } = await this.db.from("nucleus_lineage").insert({
+      organization_id: organizationId,
+      chain,
+      finalized,
+    });
 
-    // Persist into Supabase
-    return this.repo.saveContract(name, payload);
+    if (error) {
+      console.error("NucleusDBBridge.insertLineage error:", error);
+      throw error;
+    }
   }
 
-  async lineage() {
-    return this.api.lineage();
+  async insertEvent(
+    organizationId: string,
+    subsystem: string,
+    name: string,
+    version: string,
+    payload: any
+  ) {
+    const { error } = await this.db.from("nucleus_events").insert({
+      organization_id: organizationId,
+      subsystem,
+      name,
+      version,
+      payload,
+    });
+
+    if (error) {
+      console.error("NucleusDBBridge.insertEvent error:", error);
+      throw error;
+    }
   }
 
-  async finalize() {
-    return this.api.finalize();
+  async insertTelemetry(
+    organizationId: string,
+    subsystem: string,
+    level: string,
+    message: string,
+    metadata: any = null
+  ) {
+    const { error } = await this.db.from("nucleus_telemetry").insert({
+      organization_id: organizationId,
+      subsystem,
+      level,
+      message,
+      metadata,
+    });
+
+    if (error) {
+      console.error("NucleusDBBridge.insertTelemetry error:", error);
+      throw error;
+    }
+  }
+
+  async insertError(
+    organizationId: string,
+    subsystem: string,
+    code: string,
+    message: string,
+    context: any = null
+  ) {
+    const { error } = await this.db.from("nucleus_errors").insert({
+      organization_id: organizationId,
+      subsystem,
+      code,
+      message,
+      context,
+    });
+
+    if (error) {
+      console.error("NucleusDBBridge.insertError error:", error);
+      throw error;
+    }
   }
 }
