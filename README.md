@@ -336,6 +336,7 @@ server.ts
 nucleus (executable)
 package.json
 .env
+
 8. Getting Started
 Run the server
 Code
@@ -352,6 +353,7 @@ nucleus telemetry org-1
 Evaluate a decision
 Code
 nucleus decision context.json
+
 9. Status
 Nucleus is currently in active development as part of the Valtaris ecosystem.
 
