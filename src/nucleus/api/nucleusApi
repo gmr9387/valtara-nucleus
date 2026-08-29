@@ -1,75 +1,62 @@
 // src/nucleus/api/nucleusApi.ts
+// Full file swap — Nucleus constitutional API
 
-/**
- * NucleusApi (Phase 6)
- *
- * Purpose:
- *   Public constitutional API surface for:
- *     - emitting contracts
- *     - running sessions
- *     - retrieving lineage
- *     - finalizing runs
- *     - inspecting deterministic state
- */
-
-import { NucleusSession } from "../runtime/nucleusSession";
-import { eventBus } from "../events/eventBus";
+import { NucleusDBBridge } from "../db/nucleusDbBridge";
 
 export class NucleusApi {
-  private session: NucleusSession;
+  private db = new NucleusDBBridge();
+  private lineageChain: any[] = [];
 
-  constructor(
-    subsystem: "weaver" | "guardian" | "glue" | "dualpay",
-    organizationId: string
-  ) {
-    this.session = new NucleusSession(subsystem, organizationId);
-  }
+  constructor(private subsystem: string, private organizationId: string) {}
 
-  /**
-   * Emit a contract into the constitutional runtime.
-   * This is the ONLY public entrypoint for contract emission.
-   */
   emit(name: string, version: string, payload: any) {
-    // Record contract snapshot BEFORE routing
-    this.session.state.record(name, version, payload);
+    const table = this.mapTable(name);
 
-    // Emit into eventBus → runtimeHook → runtimeRouter → subsystemRuntime
-    eventBus.emit("contract.emit", { name, version, payload });
+    // Persist contract
+    this.db.insertContract(table, this.organizationId, version, payload);
 
-    return { ok: true };
+    // Persist event
+    this.db.insertEvent(
+      this.organizationId,
+      this.subsystem,
+      name,
+      version,
+      payload
+    );
+
+    // Update in-memory lineage
+    this.lineageChain.push({
+      subsystem: this.subsystem,
+      name,
+      version,
+      payload,
+      at: Date.now(),
+    });
   }
 
-  /**
-   * Retrieve the last emitted contract of a given type.
-   */
-  last(name: string) {
-    return this.session.state.last(name);
-  }
-
-  /**
-   * Retrieve full constitutional lineage.
-   */
-  lineage() {
-    return {
-      opportunity: this.session.state.last("opportunity"),
-      recommendation: this.session.state.last("recommendation"),
-      authorization: this.session.state.last("authorization"),
-      execution: this.session.state.last("execution"),
-      payment: this.session.state.last("payment"),
-    };
-  }
-
-  /**
-   * Finalize the constitutional run.
-   */
   finalize() {
-    return this.session.finalization.finalizeRun();
+    this.db.insertLineage(this.organizationId, this.lineageChain, true);
+    return { ok: true, chain: this.lineageChain };
   }
 
-  /**
-   * Expose underlying session (rarely needed).
-   */
-  getSession() {
-    return this.session;
+  lineage() {
+    return { chain: this.lineageChain };
+  }
+
+  private mapTable(name: string): string {
+    switch (name) {
+      case "opportunity":
+        return "opportunity";
+      case "recommendation":
+        return "recommendation";
+      case "authorization":
+        return "authorization_contract";
+      case "execution":
+        return "execution";
+      case "payment":
+        return "payment";
+      default:
+        throw new Error(`Unknown contract name: ${name}`);
+    }
   }
 }
