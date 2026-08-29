@@ -1,1067 +1,408 @@
-# ValtariOS Core
+Valtaris Nucleus
+A Constitutional Runtime for Workflow‑Driven Systems
+Valtaris Nucleus is a constitutional execution engine designed to unify workflow orchestration, subsystem coordination, identity governance, decision evaluation, telemetry, lineage, and background runtime processing into a single coherent platform.
 
-> Shared platform control plane for multi-tenant operations, workflow governance, integrations, telemetry, and common platform capabilities across the ValtariOS product suite.
+Nucleus provides a deterministic, auditable, and governable foundation for multi‑service systems. It is built for environments where workflows must be:
 
-ValtariOS Core is the shared platform layer for the ValtariOS ecosystem. It brings tenant-aware identity, organization and project management, connector and credential administration, workflow management, auditability, telemetry, and decision-engine foundations into a common control plane.
+traceable
 
-The project is structured as a modular monolith backed by Supabase and PostgreSQL. It is designed to provide reusable platform capabilities that other ValtariOS products can build upon without independently reimplementing core infrastructure concerns.
+replayable
 
-This repository represents an active platform implementation. Some runtime, testing, enterprise identity, and deployment capabilities remain under development or roadmap.
+governed
 
----
+identity‑aware
 
-## Table of Contents
+subsystem‑coordinated
 
-- [Overview](#overview)
-- [Why This Exists](#why-this-exists)
-- [Core Capabilities](#core-capabilities)
-- [Architecture](#architecture)
-- [Technology Stack](#technology-stack)
-- [Project Structure](#project-structure)
-- [Core Workflows](#core-workflows)
-- [Security](#security)
-- [Database Design](#database-design)
-- [API and Application Routes](#api-and-application-routes)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Testing and Verification](#testing-and-verification)
-- [Deployment](#deployment)
-- [Performance and Scalability](#performance-and-scalability)
-- [Current Status](#current-status)
-- [Known Limitations](#known-limitations)
-- [Roadmap](#roadmap)
-- [Documentation](#documentation)
-- [Screenshots](#screenshots)
-- [Contributing](#contributing)
-- [License](#license)
-- [Author](#author)
+contract‑driven
 
----
+persisted
 
-# Overview
+observable
 
-ValtariOS Core provides shared infrastructure for the ValtariOS product suite.
+constitutional
 
-The platform currently brings together:
+Nucleus is the core of the Valtaris ecosystem — powering Glue, DualPay, Guardian, Weaver, and future subsystems.
 
-- organization and tenant management;
-- projects and environments;
-- role-based access;
-- workflow definitions and versions;
-- workflow run tracking;
-- connector administration;
-- credential and secret metadata;
-- audit events;
-- telemetry events, metrics, and traces;
-- readiness and operational dashboards;
-- decision-engine contracts;
-- governance and replay-oriented foundations.
+Why Nucleus Exists
+Modern systems are fragmented:
 
-The primary goal is to establish a common platform boundary so individual ValtariOS products can consume shared capabilities instead of creating separate implementations for identity, tenancy, workflow state, integrations, and operational visibility.
+Workflows live in one service
 
----
+Identity lives in another
 
-# Why This Exists
+Telemetry is bolted on
 
-## Business Problem
+Decision logic is scattered
 
-As a software portfolio grows, individual products often begin implementing the same foundational capabilities independently.
+Subsystems operate independently
 
-Identity, tenant management, authorization, integrations, workflow state, audit logging, and operational monitoring can become fragmented across products.
+Background workers run separately
 
-That creates duplicated infrastructure, inconsistent behavior, and additional maintenance requirements.
+API layers are inconsistent
 
-ValtariOS Core explores a shared platform approach where those concerns are centralized behind a common control plane.
+Lineage is rarely captured
 
-## Technical Challenge
+Governance is an afterthought
 
-A shared platform needs to maintain clear boundaries between tenants while supporting:
+Nucleus solves this by providing a single constitutional runtime that governs:
 
-- role-aware authorization;
-- organization, project, and environment hierarchies;
-- reusable workflow primitives;
-- connector administration;
-- credential lifecycle metadata;
-- auditability;
-- telemetry;
-- predictable state transitions;
-- reusable contracts for future decision engines.
+1. Workflow Execution
+Every workflow step becomes a constitutional contract.
 
-The platform also needs to evolve without forcing every product built on top of it to independently recreate the same foundation.
+2. Subsystem Dispatch
+Weaver, Guardian, Glue, DualPay — unified under one router.
 
-## Solution
+3. Identity Binding
+API keys, service accounts, SCIM, SSO — all integrated.
 
-ValtariOS Core provides a Supabase/PostgreSQL-backed control plane with:
+4. Decision Engine
+Governance rules + confidence scoring + replay.
 
-- tenant-scoped data;
-- database-enforced RLS;
-- role-aware access;
-- workflow definitions and versions;
-- operational run tracking;
-- connector and credential administration;
-- audit and telemetry datasets;
-- shared TypeScript contracts;
-- decision-engine foundations.
-
-The current implementation focuses on establishing the shared substrate. Additional runtime and enterprise capabilities are identified separately as future work.
-
----
-
-# Core Capabilities
-
-## Tenant and Organization Management
-
-- Organization creation
-- Organization membership
-- Role assignment
-- Project management
-- Environment management
-- Tenant-scoped operational views
-
-## Workflow Management
-
-- Workflow definitions
-- Workflow versioning
-- Workflow publishing
-- Workflow run tracking
-- Step-level state
-- Workflow state guards
-- Operational workflow monitoring
-
-## Connector Management
-
-- Connector catalog
-- Connector versions
-- Connector capabilities
-- Connector bindings
-- Connector health checks
-- Organization, project, and environment-level integration scope
-
-## Credential Management
-
-- Credential records
-- Credential versions
-- Credential rotation events
-- Redacted credential metadata
-- Controlled credential references
-
-## Audit and Telemetry
-
-- Organization-scoped audit events
-- Correlation identifiers
-- Actor context
-- Before/after state information
-- Telemetry events
-- Telemetry metrics
-- Telemetry traces
-- Operational readiness views
-
-## Decision Engine Foundations
-
-The platform includes shared contracts for:
-
-- evaluation;
-- confidence;
-- governance;
-- traceability;
-- replay;
-- decision-oriented automation.
-
-These modules establish reusable interfaces for future rules-driven and AI-assisted decision workflows. They do not represent a claim that every decision-engine capability is currently operating as a complete production runtime.
-
----
-
-# Architecture
-
-## High-Level Architecture
-
-The platform consists of four primary layers:
-
-    ┌──────────────────────────────────────────────────────────┐
-    │                    ValtariOS Core UI                    │
-    │                                                          │
-    │  Dashboard · Core · Workflows · Audit · Connectors      │
-    │  Secrets · Governance · Operations                       │
-    └──────────────────────────┬───────────────────────────────┘
-                               │
-                               ▼
-    ┌──────────────────────────────────────────────────────────┐
-    │                 Shared TypeScript Layer                  │
-    │                                                          │
-    │  Core Modules · Schemas · Workflow Contracts             │
-    │  Decision Contracts · Shared Application Logic           │
-    └──────────────────────────┬───────────────────────────────┘
-                               │
-                               ▼
-    ┌──────────────────────────────────────────────────────────┐
-    │                    Supabase Platform                     │
-    │                                                          │
-    │  PostgreSQL · Auth · RLS · Storage                       │
-    │                                                          │
-    │  Organizations · Projects · Workflows · Credentials      │
-    │  Connectors · Audit · Telemetry                          │
-    └──────────────────────────┬───────────────────────────────┘
-                               │
-                               ▼
-    ┌──────────────────────────────────────────────────────────┐
-    │              Future Runtime / Product Layer              │
-    │                                                          │
-    │  Worker Runtime · Product Integrations · Decision       │
-    │  Execution · Additional ValtariOS Services              │
-    └──────────────────────────────────────────────────────────┘
-
----
-
-## System Components
-
-### Frontend
-
-React 19 with TanStack Start provides the operator-facing application.
-
-Current areas include:
-
-- landing;
-- authentication;
-- dashboard;
-- core readiness;
-- workflows;
-- audit;
-- connectors;
-- secrets;
-- governance.
-
-### Application Layer
-
-Shared TypeScript modules under `src/lib` provide common application logic, schemas, core modules, and workflow-oriented contracts.
-
-### Database
-
-PostgreSQL through Supabase stores:
-
-- organizations;
-- organization members;
-- projects;
-- environments;
-- workflows;
-- workflow versions;
-- workflow runs;
-- workflow steps;
-- credentials;
-- credential versions;
-- credential rotation events;
-- connectors;
-- connector bindings;
-- connector health checks;
-- audit events;
-- telemetry events;
-- telemetry metrics;
-- telemetry traces.
-
-### Authentication
-
-Supabase Auth manages user identity and sessions.
-
-Application-level permission checks are paired with database authorization through tenant membership and RLS policies.
-
-### Storage and Credential References
-
-Credential information is represented through versioned and redacted metadata with storage references rather than exposing sensitive material through broadly readable application tables.
-
-### Decision Engine
-
-Decision-engine modules define reusable contracts for evaluation, confidence, governance, replay, and traceability.
-
-These contracts provide a foundation for future decision-oriented capabilities across ValtariOS products.
-
-### Runtime Foundations
+5. Telemetry & Tracing
+Every event is persisted and observable.
 
-Workflow runs, workflow steps, telemetry, and state guards establish the data model needed for asynchronous execution and recovery-oriented runtime behavior.
-
-A more complete worker runtime remains future work.
-
-### Integrations
-
-Connector records support external services across categories including:
-
-- AI;
-- messaging;
-- payments;
-- social;
-- databases;
-- other external services.
-
-The connector model is intended to allow additional ValtariOS products to consume shared integration infrastructure.
-
----
-
-# Data Flow
-
-A typical platform interaction follows this pattern:
-
-    User
-      │
-      ▼
-    Supabase Auth
-      │
-      ▼
-    ValtariOS Core Console
-      │
-      ├── Organization / Project / Environment
-      │
-      ├── Workflow Management
-      │
-      ├── Connector Administration
-      │
-      └── Credential Administration
-      │
-      ▼
-    Shared TypeScript Modules
-      │
-      ▼
-    Supabase / PostgreSQL
-      │
-      ├── RLS authorization
-      ├── Audit records
-      ├── Telemetry
-      ├── Workflow state
-      └── Integration metadata
-      │
-      ▼
-    Future Product / Runtime Consumers
-
-The database remains the primary source of persisted platform state.
-
----
-
-# Technology Stack
+6. Lineage
+Every workflow run produces a complete lineage tree.
 
-## Frontend
+7. Background Runtime
+Durable queue + worker pool + subsystem‑level execution.
 
-- React 19
-- TypeScript
-- TanStack Start
-- Tailwind CSS v4
+8. HTTP API Layer
+REST endpoints for workflows, subsystems, lineage, telemetry, decisions.
 
-## Backend and Data
+9. CLI
+nucleus dev, nucleus run, nucleus inspect, nucleus lineage, nucleus telemetry, nucleus decision.
 
-- Supabase
-- PostgreSQL
-- Supabase Auth
-- Supabase Storage
-- TypeScript application modules
+10. Constitution
+A single object that unifies the entire runtime.
 
-## Infrastructure
+Architecture Overview
+Nucleus is built around a constitutional spine:
 
-- Vite
-- Cloudflare-compatible runtime configuration
-- Supabase-managed database and authentication services
-- Supabase migrations
+Code
+Workflow Engine
+   ↓
+NucleusApi
+   ↓
+Subsystem Router
+   ↓
+Subsystem Runtime (Weaver / Guardian / Glue / DualPay)
+   ↓
+Nucleus Runtime (Workers + Durable Queue)
+   ↓
+Supabase (Lineage + Telemetry + Events)
+Parallel to this spine:
 
-## Validation and Development
+Code
+Identity Layer
+Decision Engine
+HTTP API Layer
+CLI
+Constitution
+Everything is unified under:
 
-- ESLint
-- Prettier
-- TypeScript
-- Vite build tooling
+Code
+src/nucleus/constitution.ts
+This file is the “brain” of Nucleus.
 
-## AI and Decision Systems
+Core Concepts
+Constitutional Contracts
+Every workflow step is treated as a constitutional event:
 
-The current platform provides decision-engine contracts and AI-oriented connector categories.
+opportunity
 
-The repository does not represent every AI capability as a completed production decision engine.
+recommendation
 
----
+authorization
 
-# Project Structure
+execution
 
-    project/
-    │
-    ├── src/
-    │   ├── components/
-    │   ├── hooks/
-    │   ├── integrations/
-    │   ├── lib/
-    │   │   ├── core/
-    │   │   ├── schemas/
-    │   │   └── workflows/
-    │   ├── routes/
-    │   ├── router.tsx
-    │   ├── routeTree.gen.ts
-    │   ├── server.ts
-    │   ├── start.ts
-    │   └── styles.css
-    │
-    ├── supabase/
-    │   ├── config.toml
-    │   └── migrations/
-    │
-    ├── public/
-    ├── README.md
-    ├── package.json
-    ├── bun.lock
-    ├── components.json
-    ├── eslint.config.js
-    ├── tsconfig.json
-    ├── vite.config.ts
-    └── wrangler.jsonc
+payment
 
----
+Each event is:
 
-# Core Workflows
+emitted
 
-## 1. Tenant Setup
+traced
 
-### Purpose
+persisted
 
-Establish an organization and its initial project and environment structure.
+governed
 
-### Process
+identity‑bound
 
-A user authenticates, creates an organization, is established as an owner, and provisions projects and environments within that organization.
+lineage‑tracked
 
-### Result
+This creates a deterministic audit trail.
 
-A tenant-scoped workspace exists with organization membership and role-aware access controls.
+Subsystems
+Nucleus ships with four constitutional subsystems:
 
----
+Weaver — opportunity + recommendation
 
-## 2. Organization Membership
+Guardian — authorization
 
-### Purpose
+Glue — execution
 
-Manage access to shared platform resources.
+DualPay — payment
 
-### Process
+Each subsystem has:
 
-Organization members are associated with roles such as:
+a runtime
 
-- owner;
-- admin;
-- manager;
-- operator;
-- viewer.
+a constitutional contract handler
 
-Database policies use organization membership and role information to constrain access.
+lineage generation
 
-### Result
+telemetry emission
 
-Platform resources remain scoped to the organization and the permissions associated with the authenticated member.
+Identity Layer
+Nucleus integrates:
 
----
+API keys
 
-## 3. Connector and Credential Administration
+service accounts
 
-### Purpose
+SCIM skeleton
 
-Manage external integration metadata and credential lifecycle information.
+SSO skeleton
 
-### Process
+identity context
 
-Administrators register credentials, maintain credential versions and rotation events, configure connector bindings, and review connector health information.
+identity service
 
-### Result
+Identity is bound at the HTTP layer and propagated through:
 
-External integrations can be managed from a common platform layer rather than independently inside every product.
+workflow execution
 
----
+subsystem dispatch
 
-## 4. Workflow Management
+decision evaluation
 
-### Purpose
+runtime execution
 
-Create and manage reusable workflows.
+Decision Engine
+The decision engine provides:
 
-### Process
+governance rules
 
-Managers define workflow structures, create versions, publish workflow definitions, and initiate workflow runs.
+confidence scoring
 
-Workflow records track lifecycle state and individual steps.
+replay
 
-### Result
+unified evaluation
 
-Products have a shared workflow representation that can be extended as runtime capabilities mature.
+This allows Nucleus to enforce:
 
----
+policy
 
-## 5. Audit and Telemetry
+compliance
 
-### Purpose
+authorization
 
-Provide operational visibility into platform activity.
+risk scoring
 
-### Process
+Telemetry & Lineage
+Every event is persisted into Supabase:
 
-Platform actions generate audit and telemetry records containing relevant actor, organization, entity, timestamp, and correlation information.
+nucleus_lineage
 
-### Result
+nucleus_telemetry
 
-Operators can inspect platform activity through centralized audit and telemetry views.
+nucleus_events
 
----
+This provides:
 
-## 6. Decision-Engine Foundations
+full replay
 
-### Purpose
+full auditability
 
-Provide shared contracts for future rules-driven and AI-assisted decision workflows.
+full observability
 
-### Process
+Runtime
+Nucleus includes:
 
-Decision modules define evaluation, confidence, governance, trace, and replay-oriented structures.
+durable queue
 
-### Result
+worker pool
 
-Products can build on a common decision model rather than inventing separate interfaces for every product.
+background execution
 
----
+subsystem‑level runtime
 
-# Security
+This allows workflows to run:
 
-## Authentication
+synchronously
 
-Supabase Auth provides user identity and session management.
+asynchronously
 
-Protected application routes require authentication before users can access the operational console.
+concurrently
 
-## Authorization
+HTTP API
+Nucleus exposes:
 
-The platform uses role-aware authorization combined with PostgreSQL Row-Level Security.
+Code
+POST /nucleus/workflow/run
+POST /nucleus/subsystem/dispatch
+GET  /nucleus/lineage/:org
+GET  /nucleus/telemetry/:org
+POST /nucleus/decision/evaluate
+Identity is bound via:
 
-Current role concepts include:
+Code
+x-api-key
+x-service-account
+x-org
+x-subsystem
+CLI
+Nucleus ships with a full CLI:
 
-- owner;
-- admin;
-- manager;
-- operator;
-- viewer.
+Code
+nucleus dev
+nucleus run workflow.json
+nucleus inspect org
+nucleus lineage org
+nucleus telemetry org
+nucleus decision context.json
+This allows developers to:
 
-The database remains an important authorization boundary rather than relying exclusively on UI controls.
+run workflows
 
-## Multi-Tenant Isolation
+inspect lineage
 
-Organizations represent the primary tenant boundary.
+inspect telemetry
 
-Resources such as:
+evaluate decisions
 
-- projects;
-- environments;
-- workflows;
-- credentials;
-- connectors;
-- audit events;
-- telemetry
+run the server
 
-are associated with organizational scope.
+Constitution
+The Constitution is the unified interface:
 
-RLS policies are used to constrain access according to authenticated organization membership and role.
+ts
+const nucleus = new Nucleus("org-1", "weaver");
 
-## Credential Handling
+await nucleus.runWorkflow(definition);
+await nucleus.dispatch("authorization", "v1", payload);
+await nucleus.emit("execution", "v1", payload);
+nucleus.evaluate(context);
+nucleus.startRuntime();
+nucleus.enqueue("payment", "v1", payload);
+This is the single source of truth for the entire runtime.
 
-Credential records are represented through controlled metadata, versioning, rotation information, and references rather than exposing sensitive values through generally readable tables.
+Design Principles
+Nucleus is built on five constitutional principles:
 
-The repository does not claim that this architecture alone constitutes a complete secrets-management or compliance certification.
+1. Determinism
+Every workflow run produces the same lineage.
 
-## Audit Logging
+2. Governance
+Every decision is governed by explicit rules.
 
-Audit events capture operational context including:
+3. Identity
+Every action is identity‑bound.
 
-- module;
-- action;
-- entity;
-- actor;
-- organization;
-- correlation identifiers;
-- before/after state information.
+4. Observability
+Every event is traced, persisted, and replayable.
 
-These records provide an audit-oriented history of platform activity.
+5. Constitution
+Every subsystem operates under a unified constitutional runtime.
 
-## Input Validation
+Use Cases
+Enterprise Workflow Engines
+Replace brittle workflow systems with a constitutional runtime.
 
-Zod schemas and TypeScript contracts are used to validate application and domain data.
+Financial Systems
+DualPay + Guardian provide payment + authorization governance.
 
-Database constraints and state guards provide additional protection at the persistence layer.
+Healthcare Systems
+Lineage + decision engine provide auditability and compliance.
 
-## Workflow State Protection
+AI Orchestration
+Weaver + Glue provide opportunity + execution coordination.
 
-Workflow and version state transitions include database and application-level guards intended to prevent invalid lifecycle changes.
+Multi‑Service Platforms
+Nucleus unifies subsystem execution under one constitutional spine.
 
----
+Why Nucleus Is Different
+Most workflow engines are:
 
-# Database Design
+stateless
 
-## Overview
+ungoverned
 
-The database is organized around shared platform primitives and operational datasets.
+identity‑agnostic
 
-Organizations provide the primary tenant boundary.
+subsystem‑blind
 
-Projects and environments provide additional structure for product and deployment scope.
+telemetry‑optional
 
-Workflows, connectors, credentials, audit records, and telemetry build on those platform relationships.
+lineage‑missing
 
-## Core Tables
+runtime‑fragmented
 
-- `organizations`
-- `organization_members`
-- `projects`
-- `environments`
-- `workflows`
-- `workflow_versions`
-- `workflow_runs`
-- `workflow_steps`
-- `credentials`
-- `credential_versions`
-- `credential_rotation_events`
-- `connectors`
-- `connector_bindings`
-- `connector_health_checks`
-- `audit_events`
-- `telemetry_events`
-- `telemetry_metrics`
-- `telemetry_traces`
+Nucleus is:
 
-## Relationships
+stateful
 
-The primary hierarchy is:
+governed
 
-    Organization
-        │
-        ├── Members
-        │
-        ├── Projects
-        │      │
-        │      └── Environments
-        │
-        ├── Workflows
-        │      │
-        │      ├── Workflow Versions
-        │      └── Workflow Runs
-        │             │
-        │             └── Workflow Steps
-        │
-        ├── Connectors
-        │      │
-        │      └── Connector Bindings
-        │
-        └── Credentials
-               │
-               ├── Credential Versions
-               └── Rotation Events
+identity‑aware
 
-Audit and telemetry datasets provide cross-cutting operational visibility.
+subsystem‑coordinated
 
-## Indexing
+telemetry‑first
 
-The schema includes indexes around tenant identifiers, workflow state, audit timestamps, telemetry dimensions, connector bindings, and credential relationships.
+lineage‑complete
 
-These indexes support common operational and tenant-scoped access patterns.
+runtime‑unified
 
----
+constitutionally structured
 
-# API and Application Routes
+This is not a workflow engine.
+This is a constitutional runtime.
 
-## Authentication
+Project Structure
+Code
+src/
+  nucleus/
+    api/
+    cli/
+    decision/
+    http/
+    identity/
+    ops/
+    subsystems/
+    constitution.ts
+    index.ts
+  lib/
+    workflows/
+server.ts
+nucleus (executable)
+package.json
+.env
+Getting Started
+Run the server
+Code
+nucleus dev
+Run a workflow
+Code
+nucleus run workflow.json
+Inspect lineage
+Code
+nucleus lineage org-1
+Inspect telemetry
+Code
+nucleus telemetry org-1
+Evaluate a decision
+Code
+nucleus decision context.json
+Status
+Nucleus is currently in active development as part of the Valtaris ecosystem.
 
-Authenticated access is required for protected platform operations.
+License
+MIT (or your preferred license — add later)
 
-Tenant actions are further constrained by organization membership and role.
-
-## Current Application Routes
-
-| Route | Purpose |
-| --- | --- |
-| `/` | Public landing page |
-| `/login` | Authentication entry point |
-| `/_app/dashboard` | Tenant operations dashboard |
-| `/_app/core` | Core readiness and module registry |
-| `/_app/workflows` | Workflow management and execution views |
-| `/_app/audit` | Audit activity interface |
-| `/_app/connectors` | Connector administration |
-| `/_app/secrets` | Credential administration |
-
-## API Direction
-
-The current application is primarily route-driven and backed by typed Supabase data access.
-
-A broader public API surface under `/api/public/` is part of the platform's longer-term direction rather than being presented here as a completed public API product.
-
----
-
-# Installation
-
-## Prerequisites
-
-- Bun
-- Node.js-compatible development environment
-- Access to a Supabase project
-
-## Clone Repository
-
-    git clone <repository-url>
-
-## Install Dependencies
-
-    bun install
-
-## Configure Environment
-
-Create a `.env` file containing the required Supabase and application configuration.
-
-## Start Development Server
-
-    bun dev
-
----
-
-# Configuration
-
-Configuration is driven through environment variables and project configuration files including:
-
-- `.env`
-- `vite.config.ts`
-- `supabase/config.toml`
-- `wrangler.jsonc`
-
-The application requires the appropriate Supabase project and authentication configuration before database-backed functionality can operate correctly.
-
-Do not commit private credentials or service-role secrets to the repository.
-
----
-
-# Testing and Verification
-
-## Current Test Position
-
-The repository does not currently define a dedicated automated unit-test suite in `package.json`.
-
-This is an important current limitation and is intentionally documented rather than presented as broader test coverage than exists.
-
-## Application Validation
-
-Current validation can include:
-
-- TypeScript/build validation;
-- linting;
-- manual application flows;
-- database schema behavior;
-- authentication flows;
-- RLS behavior;
-- workflow state transitions.
-
-## Manual Verification
-
-Representative verification should include:
-
-1. Authenticate a user.
-2. Create or access an organization.
-3. Confirm organization membership and role behavior.
-4. Create a project.
-5. Create an environment.
-6. Create and manage workflow definitions.
-7. Create workflow versions.
-8. Verify publishing and state protections.
-9. Configure connector metadata.
-10. Review credential version and rotation records.
-11. Inspect audit activity.
-12. Inspect telemetry records.
-13. Verify users cannot access resources outside their authorized organization.
-
-## Integration Testing
-
-The repository does not currently claim a comprehensive standalone automated integration-test suite.
-
-Additional automated coverage is appropriate as the shared platform expands.
-
-## Performance Testing
-
-Formal production-scale benchmarks have not been established.
-
-Performance work remains an area for future validation.
-
----
-
-# Deployment
-
-## Development
-
-Run the application locally using Bun and the configured Supabase environment.
-
-    bun dev
-
-## Build
-
-    bun run build
-
-## Lint
-
-    bun run lint
-
-## Staging
-
-A staging deployment should use isolated Supabase resources and environment-specific configuration before being considered for broader operational use.
-
-## Production
-
-The repository contains configuration and architecture suitable for continued deployment development, but this project does not claim to be a commercially deployed production platform.
-
-Production deployment would require additional validation around:
-
-- database security;
-- authentication;
-- secrets management;
-- monitoring;
-- backups;
-- runtime execution;
-- load;
-- incident handling;
-- compliance requirements appropriate to the deployment.
-
----
-
-# Performance and Scalability
-
-## Current Position
-
-The platform uses:
-
-- indexed tenant-scoped database access;
-- TanStack Query for client-side query management;
-- modular application boundaries;
-- Supabase/PostgreSQL persistence;
-- reusable shared platform modules.
-
-These characteristics provide a foundation for continued scaling work.
-
-## What Has Not Been Established
-
-The project does not currently claim:
-
-- a specific throughput target;
-- a production latency SLA;
-- a verified concurrent-user limit;
-- formal load-test results;
-- multi-region execution;
-- production-scale worker capacity.
-
-Those claims should be established through measurement rather than architecture assumptions.
-
-## Future Runtime Scaling
-
-Future work can introduce:
-
-- dedicated workers;
-- queue processing;
-- background execution;
-- stronger telemetry;
-- distributed tracing;
-- scaling controls;
-- additional runtime isolation.
-
----
-
-# Current Status
-
-ValtariOS Core currently provides the shared platform foundation for the ValtariOS ecosystem.
-
-### Implemented Foundations
-
-- Multi-tenant organization model
-- Organization membership
-- Role model
-- Project management
-- Environment management
-- Workflow definitions
-- Workflow versioning
-- Workflow run and step models
-- Connector catalog
-- Connector bindings
-- Credential versioning
-- Credential rotation records
-- Audit datasets
-- Telemetry datasets
-- Core readiness views
-- Decision-engine contracts
-- Supabase/PostgreSQL integration
-- RLS-based tenant authorization
-
-### Developing / Expanding
-
-- Broader automated test coverage
-- Runtime worker execution
-- Product integration spine
-- Public API surface
-- Advanced identity controls
-- Enterprise identity integrations
-- Deeper decision-engine execution
-
----
-
-# Known Limitations
-
-The following limitations are intentionally documented.
-
-## Automated Test Coverage
-
-There is currently no dedicated unit-test suite defined in `package.json`.
-
-## Integration Coverage
-
-The repository does not currently claim a comprehensive standalone automated integration-test suite.
-
-## Runtime Execution
-
-Workflow persistence and state modeling exist, but a fully hardened worker runtime remains future work.
-
-## Public API
-
-The platform has a direction toward a public API surface, but the current repository should not be interpreted as a completed public API product.
-
-## Enterprise Identity
-
-SSO and SCIM are roadmap capabilities.
-
-## Performance
-
-Formal load testing and published performance baselines have not been completed.
-
-## Multi-Region
-
-Multi-region execution and enforcement remain future work.
-
-## Compliance
-
-The architecture includes security-oriented controls such as RLS, role-aware access, audit records, and credential-handling patterns.
-
-This repository does not claim:
-
-- HIPAA certification;
-- SOC 2 certification;
-- independent security certification;
-- independent compliance audit;
-- production authorization for regulated workloads.
-
-Any regulated deployment would require its own security, legal, privacy, compliance, and operational assessment.
-
----
-
-# Roadmap
-
-## Near Term
-
-- Expand automated unit and integration testing.
-- Strengthen workflow runtime validation.
-- Continue improving platform readiness checks.
-- Expand connector lifecycle capabilities.
-- Improve operational telemetry.
-
-## Product Integration Spine
-
-Planned capabilities include:
-
-- product registry;
-- service accounts;
-- scoped API keys;
-- event ingestion;
-- shared product-to-core contracts.
-
-## Runtime
-
-Future work includes:
-
-- dedicated worker execution;
-- durable background processing;
-- stronger retry and recovery semantics;
-- runtime health monitoring;
-- queue and execution telemetry.
-
-## Identity and Access
-
-Future capabilities include:
-
-- SSO;
-- SCIM;
-- stronger authentication controls;
-- expanded service-account management;
-- more granular API authorization.
-
-## Decision Engine
-
-Future work includes:
-
-- live decision-engine execution;
-- expanded governance policies;
-- richer confidence handling;
-- decision replay;
-- AI-assisted workflows where appropriate.
-
-## Platform Expansion
-
-Longer-term development may include:
-
-- commercial entitlements;
-- broader product integration;
-- stronger observability;
-- distributed tracing;
-- regional execution controls;
-- additional shared ValtariOS services.
-
----
-
-# Documentation
-
-| Resource | Purpose |
-| --- | --- |
-| `README.md` | Platform overview and current capabilities |
-| `src/lib/core/*` | Core platform and decision-engine modules |
-| `src/lib/schemas/*` | Domain validation schemas |
-| `src/lib/workflows/*` | Workflow-oriented modules |
-| `supabase/migrations/*` | Database schema and security history |
-| `src/routes/*` | Application routes and platform workflows |
-
----
-
-# Screenshots
-
-Screenshots and architecture diagrams can be added as the visual demonstration package is finalized.
-
-The primary technical evidence remains the repository source, migrations, application structure, and documented implementation status.
-
----
-
-# Contributing
-
-Contributors should:
-
-1. Keep changes focused.
-2. Follow the existing TypeScript and React patterns.
-3. Preserve tenant-aware authorization.
-4. Avoid weakening RLS policies to simplify application behavior.
-5. Validate schema changes carefully.
-6. Add automated tests as shared modules mature.
-7. Document behavioral changes affecting workflows, security, integrations, or platform contracts.
-8. Use pull requests for reviewable changes.
-
-Before submitting a change, run the applicable repository validation commands, including:
-
-    bun run lint
-    bun run build
-
-Additional tests should be added as the platform's automated verification layer expands.
-
----
-
-# License
-
-Private. All rights reserved.
-
----
-
-# Author
-
-**George Rios**
-
-Founder & Software Engineer
-
-**Valtaris Technologies**
-
-ValtariOS Core is an independent engineering project focused on shared platform architecture, multi-tenant application infrastructure, workflow systems, integrations, telemetry, and reusable decision-engine foundations.
+Author
+George (Valtaris Systems)
