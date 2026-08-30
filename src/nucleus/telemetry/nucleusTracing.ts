@@ -1,44 +1,32 @@
 // src/nucleus/telemetry/nucleusTracing.ts
-// Full file swap — Nucleus Distributed Tracing
-
-export type TraceSpan = {
-  traceId: string;
-  spanId: string;
-  parentSpanId?: string;
-  name: string;
-  subsystem?: string;
-  startedAt: number;
-  endedAt?: number;
-};
+// Full file — Nucleus Tracing Engine
 
 export class NucleusTracing {
-  private spans: TraceSpan[] = [];
+  private spans: Record<string, any> = {};
 
-  startSpan(name: string, subsystem?: string, parentSpanId?: string): TraceSpan {
-    const span: TraceSpan = {
-      traceId: this.id(),
-      spanId: this.id(),
-      parentSpanId,
+  startSpan(name: string, subsystem: string) {
+    const spanId = `${name}-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`;
+
+    this.spans[spanId] = {
+      id: spanId,
       name,
       subsystem,
-      startedAt: Date.now(),
+      start: Date.now(),
+      end: null,
     };
-    this.spans.push(span);
-    return span;
+
+    return this.spans[spanId];
   }
 
   endSpan(spanId: string) {
-    const span = this.spans.find((s) => s.spanId === spanId);
-    if (span) {
-      span.endedAt = Date.now();
+    if (this.spans[spanId]) {
+      this.spans[spanId].end = Date.now();
     }
   }
 
   getSpans() {
-    return [...this.spans];
-  }
-
-  private id() {
-    return Math.random().toString(16).slice(2);
+    return Object.values(this.spans);
   }
 }
