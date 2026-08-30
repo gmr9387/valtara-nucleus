@@ -1,44 +1,33 @@
 // src/nucleus/db/nucleusDbBridge.ts
-// Full file swap — Nucleus DB persistence layer
+// Constitutional Nucleus DB Bridge
 
-import { NucleusDB } from "./nucleusDB";
+import { createNucleusClient } from "./nucleusDB";
+import { NucleusTelemetryAdapter } from "../telemetry/nucleusTelemetryAdapter";
 
 export class NucleusDBBridge {
-  private db = new NucleusDB().getClient();
+  private client = createNucleusClient();
+  private telemetry: NucleusTelemetryAdapter;
 
-  async insertContract(
-    table: string,
-    organizationId: string,
-    version: string,
-    payload: any
-  ) {
-    const { error } = await this.db.from(table).insert({
-      organization_id: organizationId,
-      version,
-      payload,
-    });
-
-    if (error) {
-      console.error("NucleusDBBridge.insertContract error:", error);
-      throw error;
-    }
+  constructor(private organizationId: string, private subsystem?: string) {
+    this.telemetry = new NucleusTelemetryAdapter(organizationId, subsystem ?? "nucleus-db");
   }
 
-  async insertLineage(
-    organizationId: string,
-    chain: any,
-    finalized: boolean = false
-  ) {
-    const { error } = await this.db.from("nucleus_lineage").insert({
+  async insertContract(table: string, organizationId: string, version: string, payload: any) {
+    const span = this.telemetry.startSpan(`db:insertContract:${table}`);
+
+    const { error } = await this.client.from(table).insert({
       organization_id: organizationId,
-      chain,
-      finalized,
+      version,
+      payload
     });
 
     if (error) {
-      console.error("NucleusDBBridge.insertLineage error:", error);
+      await this.telemetry.error("DB insertContract failed", { table, error });
       throw error;
     }
+
+    await this.telemetry.info("DB contract inserted", { table, version });
+    this.telemetry.endSpan(span.spanId);
   }
 
   async insertEvent(
@@ -48,59 +37,44 @@ export class NucleusDBBridge {
     version: string,
     payload: any
   ) {
-    const { error } = await this.db.from("nucleus_events").insert({
+    const span = this.telemetry.startSpan(`db:insertEvent:${name}`);
+
+    const { error } = await this.client.from("nucleus_events").insert({
       organization_id: organizationId,
       subsystem,
       name,
       version,
-      payload,
+      payload
     });
 
     if (error) {
-      console.error("NucleusDBBridge.insertEvent error:", error);
+      await this.telemetry.error("DB insertEvent failed", { name, error });
       throw error;
     }
+
+    await this.telemetry.info("DB event inserted", { name, version });
+    this.telemetry.endSpan(span.spanId);
   }
 
-  async insertTelemetry(
-    organizationId: string,
-    subsystem: string,
-    level: string,
-    message: string,
-    metadata: any = null
-  ) {
-    const { error } = await this.db.from("nucleus_telemetry").insert({
+  async insertLineage(organizationId: string, chain: any, finalized: boolean = false) {
+    const span = this.telemetry.startSpan("db:insertLineage");
+
+    const { error } = await this.client.from("nucleus_lineage").insert({
       organization_id: organizationId,
-      subsystem,
-      level,
-      message,
-      metadata,
+      chain,
+      finalized
     });
 
     if (error) {
-      console.error("NucleusDBBridge.insertTelemetry error:", error);
+      await this.telemetry.error("DB insertLineage failed", { error });
       throw error;
     }
-  }
 
-  async insertError(
-    organizationId: string,
-    subsystem: string,
-    code: string,
-    message: string,
-    context: any = null
-  ) {
-    const { error } = await this.db.from("nucleus_errors").insert({
-      organization_id: organizationId,
-      subsystem,
-      code,
-      message,
-      context,
+    await this.telemetry.info("DB lineage inserted", {
+      chainLength: chain.length,
+      finalized
     });
 
-    if (error) {
-      console.error("NucleusDBBridge.insertError error:", error);
-      throw error;
-    }
+    this.telemetry.endSpan(span.spanId);
   }
 }
