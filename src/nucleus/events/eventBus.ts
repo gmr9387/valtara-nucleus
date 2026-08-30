@@ -1,22 +1,7 @@
 // src/nucleus/events/eventBus.ts
+// Full file — Unified Constitutional Event Bus
 
 import { NucleusEvent } from "../contracts/NucleusEvent";
-
-/**
- * Nucleus Event Bus
- *
- * A simple in-memory event bus aligned with the Valtara Constitution.
- *
- * Nucleus = KNOW
- * Weaver = FIND
- * Guardian = ALLOW
- * Glue = DO
- * DualPay = SPECIALIZE
- *
- * Every subsystem emits NucleusEvents.
- * Nucleus observes them.
- * Other subsystems may subscribe to them.
- */
 
 export type EventHandler = (event: NucleusEvent) => void | Promise<void>;
 
