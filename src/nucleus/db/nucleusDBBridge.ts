@@ -8,17 +8,25 @@ export class NucleusDBBridge {
   private client = createNucleusClient();
   private telemetry: NucleusTelemetryAdapter;
 
-  constructor(private organizationId: string, private subsystem?: string) {
-    this.telemetry = new NucleusTelemetryAdapter(organizationId, subsystem ?? "nucleus-db");
+  constructor(private organizationId?: string, private subsystem?: string) {
+    this.telemetry = new NucleusTelemetryAdapter(
+      organizationId ?? "nucleus-db-org",
+      subsystem ?? "nucleus-db"
+    );
   }
 
-  async insertContract(table: string, organizationId: string, version: string, payload: any) {
+  async insertContract(
+    table: string,
+    organizationId: string,
+    version: string,
+    payload: any
+  ) {
     const span = this.telemetry.startSpan(`db:insertContract:${table}`);
 
     const { error } = await this.client.from(table).insert({
       organization_id: organizationId,
       version,
-      payload
+      payload,
     });
 
     if (error) {
@@ -44,7 +52,7 @@ export class NucleusDBBridge {
       subsystem,
       name,
       version,
-      payload
+      payload,
     });
 
     if (error) {
@@ -56,13 +64,17 @@ export class NucleusDBBridge {
     this.telemetry.endSpan(span.spanId);
   }
 
-  async insertLineage(organizationId: string, chain: any, finalized: boolean = false) {
+  async insertLineage(
+    organizationId: string,
+    chain: any,
+    finalized: boolean = false
+  ) {
     const span = this.telemetry.startSpan("db:insertLineage");
 
     const { error } = await this.client.from("nucleus_lineage").insert({
       organization_id: organizationId,
       chain,
-      finalized
+      finalized,
     });
 
     if (error) {
@@ -72,9 +84,36 @@ export class NucleusDBBridge {
 
     await this.telemetry.info("DB lineage inserted", {
       chainLength: chain.length,
-      finalized
+      finalized,
     });
 
+    this.telemetry.endSpan(span.spanId);
+  }
+
+  async insertTelemetry(
+    organizationId: string,
+    subsystem: string,
+    level: string,
+    message: string,
+    metadata: any = null
+  ) {
+    const span = this.telemetry.startSpan("db:insertTelemetry");
+
+    const { error } = await this.client.from("nucleus_telemetry").insert({
+      organization_id: organizationId,
+      subsystem,
+      level,
+      message,
+      metadata,
+      at: new Date().toISOString(),
+    });
+
+    if (error) {
+      await this.telemetry.error("DB insertTelemetry failed", { error });
+      throw error;
+    }
+
+    await this.telemetry.info("DB telemetry inserted", { level });
     this.telemetry.endSpan(span.spanId);
   }
 }
