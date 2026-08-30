@@ -1,93 +1,40 @@
 // src/nucleus/runtime/nucleusBoot.ts
-
-/**
- * NucleusBoot (Phase 3.5)
- *
- * Purpose:
- *   Final initializer for the constitutional runtime.
- *
- * Responsibilities:
- *     - instantiate NucleusRuntime
- *     - attach runtimeHook
- *     - bind subsystem runtimes
- *     - bind orchestrationRouter
- *     - bind eventBus
- *     - expose unified runtime API
- */
+// Full file — Authoritative Nucleus Boot Sequence (Unified Constitutional Boot)
 
 import { NucleusRuntime } from "./nucleusRuntime";
-import { eventBus } from "../events/eventBus";
-import { orchestrationRouter } from "../events/orchestrationRouter";
 
-export class NucleusBoot {
-  private runtime: NucleusRuntime;
+// Constitutional KNOW layer
+import { nucleusBoot as constitutionBoot } from "../state/nucleusBoot";
 
-  constructor(
-    private subsystem: "weaver" | "guardian" | "glue" | "dualpay",
-    private organizationId: string
-  ) {
-    this.runtime = new NucleusRuntime(subsystem, organizationId);
-  }
+// Subsystem runtimes
+import { startWeaverRuntime } from "../subsystems/weaver/weaverRuntime";
+import { startGuardianRuntime } from "../subsystems/guardian/guardianRuntime";
+import { startGlueRuntime } from "../subsystems/glue/glueRuntime";
+import { startDualPayRuntime } from "../subsystems/dualpay/dualPayRuntime";
 
-  /**
-   * Boot the constitutional runtime.
-   */
-  boot() {
-    // Attach runtimeHook → enforces constitution on all events
-    this.runtime.boot();
+// Integration loader
+import { loadIntegrations } from "../integrations/integrationLoader";
 
-    // Bind orchestration router to eventBus
-    this.attachOrchestration();
+export function nucleusBoot(subsystem: "weaver" | "guardian" | "glue" | "dualpay", organizationId: string) {
+  console.log("=== [Nucleus] Unified Boot Sequence Starting ===");
 
-    // Bind subsystem runtime handlers
-    this.attachSubsystemRuntime();
+  // 1. Constitutional initialization (KNOW)
+  constitutionBoot();
 
-    return this.runtime;
-  }
+  // 2. Runtime initialization (DO)
+  const runtime = new NucleusRuntime(subsystem, organizationId);
+  runtime.boot();
 
-  /**
-   * Attach orchestration router to eventBus.
-   */
-  private attachOrchestration() {
-    eventBus.on("contract.validated.opportunity", (payload) => {
-      orchestrationRouter.route("opportunity", payload);
-    });
+  // 3. Subsystem runtime initialization
+  startWeaverRuntime();
+  startGuardianRuntime();
+  startGlueRuntime();
+  startDualPayRuntime();
 
-    eventBus.on("contract.validated.recommendation", (payload) => {
-      orchestrationRouter.route("recommendation", payload);
-    });
+  // 4. Integration initialization
+  loadIntegrations();
 
-    eventBus.on("contract.validated.authorization", (payload) => {
-      orchestrationRouter.route("authorization", payload);
-    });
+  console.log("=== [Nucleus] Unified Boot Sequence Complete ===");
 
-    eventBus.on("contract.validated.execution", (payload) => {
-      orchestrationRouter.route("execution", payload);
-    });
-
-    eventBus.on("contract.validated.payment", (payload) => {
-      orchestrationRouter.route("payment", payload);
-    });
-  }
-
-  /**
-   * Attach subsystem runtime handlers.
-   *
-   * Example:
-   *   weaverRuntime.handle("opportunity", payload)
-   */
-  private attachSubsystemRuntime() {
-    const subsystemRuntimeMap: Record<string, any> = {
-      weaver: require("../subsystems/weaver/weaverRuntime").WeaverRuntime,
-      guardian: require("../subsystems/guardian/guardianRuntime").GuardianRuntime,
-      glue: require("../subsystems/glue/glueRuntime").GlueRuntime,
-      dualpay: require("../subsystems/dualpay/dualPayRuntime").DualPayRuntime,
-    };
-
-    const runtime = subsystemRuntimeMap[this.subsystem];
-
-    eventBus.on(`contract.validated.${this.subsystem}`, (payload) => {
-      runtime.handle(payload);
-    });
-  }
+  return runtime;
 }
