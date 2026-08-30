@@ -1,6 +1,3 @@
-// src/nucleus/subsystems/guardianRuntime.ts
-// Full file — Guardian constitutional runtime
-
 import { NucleusApi } from "../api/nucleusApi";
 
 export class GuardianRuntime {
