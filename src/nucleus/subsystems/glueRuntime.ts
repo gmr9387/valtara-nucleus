@@ -1,6 +1,3 @@
-// src/nucleus/subsystems/glueRuntime.ts
-// Full file — Glue constitutional runtime
-
 import { NucleusApi } from "../api/nucleusApi";
 
 export class GlueRuntime {
