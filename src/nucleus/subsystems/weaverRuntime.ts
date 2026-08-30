@@ -1,6 +1,3 @@
-// src/nucleus/subsystems/weaverRuntime.ts
-// Full file — Weaver constitutional runtime
-
 import { NucleusApi } from "../api/nucleusApi";
 
 export class WeaverRuntime {
