@@ -1,6 +1,3 @@
-// src/nucleus/subsystems/dualpayRuntime.ts
-// Full file — DualPay constitutional runtime
-
 import { NucleusApi } from "../api/nucleusApi";
 
 export class DualPayRuntime {
