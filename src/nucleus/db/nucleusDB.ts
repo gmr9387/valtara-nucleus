@@ -1,28 +1,11 @@
 // src/nucleus/db/nucleusDB.ts
-// Full file swap — Nucleus Supabase client
+// Constitutional Nucleus DB Client Factory
 
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
-export class NucleusDB {
-  private client: SupabaseClient;
+export function createNucleusClient() {
+  const url = import.meta.env.VITE_NUCLEUS_SUPABASE_URL!;
+  const key = import.meta.env.VITE_NUCLEUS_SUPABASE_ANON_KEY!;
 
-  constructor() {
-    const url = process.env.VITE_NUCLEUS_SUPABASE_URL;
-    const serviceRole = process.env.NUCLEUS_SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!url) {
-      throw new Error("Missing VITE_NUCLEUS_SUPABASE_URL");
-    }
-    if (!serviceRole) {
-      throw new Error("Missing NUCLEUS_SUPABASE_SERVICE_ROLE_KEY");
-    }
-
-    this.client = createClient(url, serviceRole, {
-      auth: { persistSession: false },
-    });
-  }
-
-  getClient() {
-    return this.client;
-  }
+  return createClient(url, key);
 }
