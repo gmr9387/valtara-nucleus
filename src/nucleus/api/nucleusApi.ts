@@ -1,26 +1,37 @@
 // src/nucleus/api/nucleusApi.ts
-// Full file swap — Nucleus API with Telemetry + Tracing
+// Corrected Full File — Nucleus API with Telemetry + Tracing
 
 import { NucleusDBBridge } from "../db/nucleusDbBridge";
 import { NucleusTelemetryAdapter } from "../telemetry/nucleusTelemetryAdapter";
 
 export class NucleusApi {
-  private db = new NucleusDBBridge();
+  private db: NucleusDBBridge;
   private lineageChain: any[] = [];
   private telemetry: NucleusTelemetryAdapter;
 
   constructor(private subsystem: string, private organizationId: string) {
     this.telemetry = new NucleusTelemetryAdapter(organizationId, subsystem);
+    this.db = new NucleusDBBridge(organizationId, subsystem);
   }
 
+  // -----------------------------
+  // Contract Emit
+  // -----------------------------
   async emit(name: string, version: string, payload: any) {
     const span = this.telemetry.startSpan(`emit:${name}`);
 
     const table = this.mapTable(name);
 
     try {
-      await this.db.insertContract(table, this.organizationId, version, payload);
+      // Contract write
+      await this.db.insertContract(
+        table,
+        this.organizationId,
+        version,
+        payload
+      );
 
+      // Event write
       await this.db.insertEvent(
         this.organizationId,
         this.subsystem,
@@ -29,6 +40,7 @@ export class NucleusApi {
         payload
       );
 
+      // Local lineage
       this.lineageChain.push({
         subsystem: this.subsystem,
         name,
@@ -49,11 +61,18 @@ export class NucleusApi {
     }
   }
 
+  // -----------------------------
+  // Finalize Lineage
+  // -----------------------------
   async finalize() {
     const span = this.telemetry.startSpan("finalize");
 
     try {
-      await this.db.insertLineage(this.organizationId, this.lineageChain, true);
+      await this.db.insertLineage(
+        this.organizationId,
+        this.lineageChain,
+        true
+      );
 
       await this.telemetry.info("Lineage finalized", {
         chainLength: this.lineageChain.length,
@@ -68,10 +87,16 @@ export class NucleusApi {
     }
   }
 
+  // -----------------------------
+  // Get Local Lineage
+  // -----------------------------
   lineage() {
     return { chain: this.lineageChain };
   }
 
+  // -----------------------------
+  // Contract Table Mapping
+  // -----------------------------
   private mapTable(name: string): string {
     switch (name) {
       case "opportunity":
