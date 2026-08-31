@@ -1,9 +1,17 @@
 // src/nucleus/index.ts
-// Full file — Nucleus entrypoint
 
-import { NucleusServer } from "./server";
+import { aggregateSubsystemOpenApi } from "./registerSubsystems";
 
-export function startNucleus() {
-  const server = new NucleusServer();
-  server.start();
-}
+export const NucleusOpenApi = {
+  openapi: "3.0.0",
+  info: {
+    title: "Nucleus Orchestration API",
+    version: "1.0.0",
+  },
+  paths: {
+    // core Nucleus paths...
+
+    // subsystem paths
+    ...aggregateSubsystemOpenApi().paths,
+  },
+};
