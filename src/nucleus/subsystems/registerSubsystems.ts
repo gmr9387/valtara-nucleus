@@ -1,25 +1,39 @@
-// src/nucleus/subsystems/registerSubsystems.ts
-// Full file — Updated with Contract Subsystem Registration
+// src/nucleus/registerSubsystems.ts
 
-import { SubsystemRegistry } from "./subsystemRegistry";
+import { Application } from "express";
+import { subsystemRegistry } from "./subsystemRegistry";
 
-export function registerSubsystems() {
-  return {
-    // ----------------------------------------
-    // Constitutional Subsystems
-    // ----------------------------------------
-    weaver: SubsystemRegistry.weaver,
-    guardian: SubsystemRegistry.guardian,
-    glue: SubsystemRegistry.glue,
-    dualpay: SubsystemRegistry.dualpay,
+import { bindDualpayRoutes } from "./subsystems/dualpay/dualpayRouterBinding";
+import { DualpayOpenApi } from "./subsystems/dualpay/dualpayOpenApi";
 
-    // ----------------------------------------
-    // Contract Subsystems (NEW)
-    // ----------------------------------------
-    opportunity: SubsystemRegistry.opportunity,
-    recommendation: SubsystemRegistry.recommendation,
-    authorization: SubsystemRegistry.authorization,
-    execution: SubsystemRegistry.execution,
-    payment: SubsystemRegistry.payment,
-  };
+export function registerSubsystemRoutes(app: Application) {
+  for (const subsystem of subsystemRegistry) {
+    if (!subsystem.enabled) continue;
+
+    switch (subsystem.id) {
+      case "dualpay":
+        bindDualpayRoutes(app);
+        break;
+
+      // existing cases for guardian, glue, weaver, contracts...
+    }
+  }
+}
+
+export function aggregateSubsystemOpenApi() {
+  const paths: Record<string, any> = {};
+
+  for (const subsystem of subsystemRegistry) {
+    if (!subsystem.enabled) continue;
+
+    switch (subsystem.id) {
+      case "dualpay":
+        Object.assign(paths, DualpayOpenApi.paths);
+        break;
+
+      // existing subsystem OpenAPI merges...
+    }
+  }
+
+  return { paths };
 }
