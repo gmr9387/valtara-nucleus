@@ -1,43 +1,43 @@
 // src/nucleus/api/nucleusBatchApi.ts
+// Full file — Updated with Contract Router Binding + OpenAPI Binding
 
-/**
- * NucleusBatchApi (Phase 9.3)
- *
- * Purpose:
- *   Batch contract emission under constitutional constraints.
- */
+import { NucleusTelemetryAdapter } from "../telemetry/nucleusTelemetryAdapter";
 
-import { NucleusApi } from "./nucleusApi";
-import { RuntimeConfig } from "../runtime/runtimeConfig";
-import { RuntimePerformance } from "../runtime/runtimePerformance";
+// NEW: Contract subsystem binding
+import { bindContractSubsystemRoutes } from "../subsystems/contracts/contractRouterBinding";
+
+// NEW: OpenAPI binding
+import { bindOpenApiRoutes } from "./openai/openApiRouter";
 
 export class NucleusBatchApi {
-  private perf = new RuntimePerformance();
+  private telemetry: NucleusTelemetryAdapter;
 
-  constructor(
-    private subsystem: "weaver" | "guardian" | "glue" | "dualpay",
-    private organizationId: string
-  ) {}
+  constructor(private app: any, private organizationId: string) {
+    this.telemetry = new NucleusTelemetryAdapter(
+      organizationId,
+      "nucleus-batch-api"
+    );
 
-  emitBatch(contracts: { name: string; version: string; payload: any }[]) {
-    const cfg = RuntimeConfig.get();
-    if (contracts.length > cfg.maxBatchSize) {
-      throw new Error(
-        `Batch too large: ${contracts.length} > ${cfg.maxBatchSize}`
-      );
-    }
-
-    const api = new NucleusApi(this.subsystem, this.organizationId);
-
-    return this.perf.time("batch.emit", () => {
-      for (const c of contracts) {
-        api.emit(c.name, c.version, c.payload);
-      }
-      return { ok: true };
-    });
+    this.bindRoutes();
   }
 
-  metrics() {
-    return this.perf.getSamples();
+  // -----------------------------
+  // Bind All API Routes (Batch Mode)
+  // -----------------------------
+  private bindRoutes() {
+    // ----------------------------------------
+    // Contract Subsystem Routes (NEW)
+    // ----------------------------------------
+    bindContractSubsystemRoutes(this.app, this.organizationId);
+
+    // ----------------------------------------
+    // OpenAPI Routes (NEW)
+    // ----------------------------------------
+    bindOpenApiRoutes(this.app);
+
+    // ----------------------------------------
+    // Existing subsystem bindings would go here
+    // (weaver, guardian, glue, dualpay)
+    // ----------------------------------------
   }
 }
