@@ -1,47 +1,25 @@
-import { registerSubsystem } from "./subsystemRegistry";
-import { WeaverRuntime } from "./weaverRuntime";
-import { GuardianRuntime } from "./guardianRuntime";
-import { GlueRuntime } from "./glueRuntime";
-import { DualPayRuntime } from "./dualpayRuntime";
+// src/nucleus/subsystems/registerSubsystems.ts
+// Full file — Updated with Contract Subsystem Registration
 
-export function registerAllSubsystems() {
-  registerSubsystem({
-    name: "weaver",
-    capabilities: [
-      "discover_financial_opportunity",
-      "detect_cross_system_anomaly"
-    ],
-    runtime: WeaverRuntime
-  });
+import { SubsystemRegistry } from "./subsystemRegistry";
 
-  registerSubsystem({
-    name: "guardian",
-    capabilities: [
-      "authorize_financial_action",
-      "evaluate_policy",
-      "enforce_approval_threshold"
-    ],
-    runtime: GuardianRuntime
-  });
+export function registerSubsystems() {
+  return {
+    // ----------------------------------------
+    // Constitutional Subsystems
+    // ----------------------------------------
+    weaver: SubsystemRegistry.weaver,
+    guardian: SubsystemRegistry.guardian,
+    glue: SubsystemRegistry.glue,
+    dualpay: SubsystemRegistry.dualpay,
 
-  registerSubsystem({
-    name: "glue",
-    capabilities: [
-      "execute_workflow",
-      "schedule_action",
-      "retry_operation",
-      "reconcile_execution"
-    ],
-    runtime: GlueRuntime
-  });
-
-  registerSubsystem({
-    name: "dualpay",
-    capabilities: [
-      "analyze_healthcare_reimbursement",
-      "reconcile_remittance",
-      "identify_claim_recovery"
-    ],
-    runtime: DualPayRuntime
-  });
+    // ----------------------------------------
+    // Contract Subsystems (NEW)
+    // ----------------------------------------
+    opportunity: SubsystemRegistry.opportunity,
+    recommendation: SubsystemRegistry.recommendation,
+    authorization: SubsystemRegistry.authorization,
+    execution: SubsystemRegistry.execution,
+    payment: SubsystemRegistry.payment,
+  };
 }
