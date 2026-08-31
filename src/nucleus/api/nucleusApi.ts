@@ -1,8 +1,13 @@
 // src/nucleus/api/nucleusApi.ts
-// Full file — Updated with Contract Router Binding
+// Full file — Updated with Contract Router Binding + OpenAPI Binding
 
-import { bindContractSubsystemRoutes } from "../subsystems/contracts/contractRouterBinding";
 import { NucleusTelemetryAdapter } from "../telemetry/nucleusTelemetryAdapter";
+
+// NEW: Contract subsystem binding
+import { bindContractSubsystemRoutes } from "../subsystems/contracts/contractRouterBinding";
+
+// NEW: OpenAPI binding
+import { bindOpenApiRoutes } from "./openai/openApiRouter";
 
 export class NucleusApi {
   private telemetry: NucleusTelemetryAdapter;
@@ -20,12 +25,19 @@ export class NucleusApi {
   // Bind All API Routes
   // -----------------------------
   private bindRoutes() {
-    // Existing subsystem bindings would be here if present
-    // (weaver, guardian, glue, dualpay)
-
-    // -----------------------------
-    // NEW: Contract Subsystem Binding
-    // -----------------------------
+    // ----------------------------------------
+    // Contract Subsystem Routes (NEW)
+    // ----------------------------------------
     bindContractSubsystemRoutes(this.app, this.organizationId);
+
+    // ----------------------------------------
+    // OpenAPI Routes (NEW)
+    // ----------------------------------------
+    bindOpenApiRoutes(this.app);
+
+    // ----------------------------------------
+    // Existing subsystem bindings would go here
+    // (weaver, guardian, glue, dualpay)
+    // ----------------------------------------
   }
 }
