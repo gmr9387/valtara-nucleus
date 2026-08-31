@@ -1,55 +1,22 @@
-// src/nucleus/subsystems/subsystemRegistry.ts
-// Full file — Updated with Contract Subsystem Family
+// src/nucleus/subsystemRegistry.ts
 
-export const SubsystemRegistry = {
-  // ----------------------------------------
-  // Constitutional Subsystems
-  // ----------------------------------------
-  weaver: {
-    key: "weaver",
-    description: "Weaver subsystem — intelligence orchestration",
-  },
+export type SubsystemId =
+  | "contracts"
+  | "guardian"
+  | "glue"
+  | "weaver"
+  | "dualpay"; // added
 
-  guardian: {
-    key: "guardian",
-    description: "Guardian subsystem — policy enforcement",
-  },
+export interface SubsystemDefinition {
+  id: SubsystemId;
+  label: string;
+  enabled: boolean;
+}
 
-  glue: {
-    key: "glue",
-    description: "Glue subsystem — integration and binding",
-  },
-
-  dualpay: {
-    key: "dualpay",
-    description: "DualPay subsystem — payment orchestration",
-  },
-
-  // ----------------------------------------
-  // Contract Subsystems (NEW)
-  // ----------------------------------------
-  opportunity: {
-    key: "opportunity",
-    description: "Opportunity contract subsystem",
-  },
-
-  recommendation: {
-    key: "recommendation",
-    description: "Recommendation contract subsystem",
-  },
-
-  authorization: {
-    key: "authorization",
-    description: "Authorization contract subsystem",
-  },
-
-  execution: {
-    key: "execution",
-    description: "Execution contract subsystem",
-  },
-
-  payment: {
-    key: "payment",
-    description: "Payment contract subsystem",
-  },
-};
+export const subsystemRegistry: SubsystemDefinition[] = [
+  { id: "contracts", label: "Contracts Engine", enabled: true },
+  { id: "guardian", label: "Guardian Risk Engine", enabled: true },
+  { id: "glue", label: "Glue Integration Engine", enabled: true },
+  { id: "weaver", label: "Weaver Intelligence Engine", enabled: true },
+  { id: "dualpay", label: "DualPay Payment Intelligence", enabled: true }, // NEW
+];
