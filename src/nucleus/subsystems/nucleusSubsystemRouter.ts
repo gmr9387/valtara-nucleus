@@ -1,17 +1,20 @@
 // src/nucleus/subsystems/nucleusSubsystemRouter.ts
-// Corrected Full File — Unified Nucleus Subsystem Router
+// Full file — Contract-Aware Subsystem Router
 
-import { NucleusApi } from "../api/nucleusApi";
+import { ContractRuntimeLoader } from "./contracts/contractRuntimeLoader";
 import { NucleusTelemetryAdapter } from "../telemetry/nucleusTelemetryAdapter";
 
 export class NucleusSubsystemRouter {
   private telemetry: NucleusTelemetryAdapter;
+  private loader: ContractRuntimeLoader;
 
   constructor(private organizationId: string) {
     this.telemetry = new NucleusTelemetryAdapter(
       organizationId,
       "subsystem-router"
     );
+
+    this.loader = new ContractRuntimeLoader(organizationId);
   }
 
   // -----------------------------
@@ -21,22 +24,20 @@ export class NucleusSubsystemRouter {
     const span = this.telemetry.startSpan(`dispatch:${type}`);
 
     try {
-      const subsystem = this.mapSubsystem(type);
+      // Resolve correct contract runtime
+      const runtime = this.loader.resolve(type);
 
-      const api = new NucleusApi(subsystem, this.organizationId);
+      // Execute contract runtime
+      const result = await runtime.run(version, payload);
 
-      await api.emit(type, version, payload);
-      const result = await api.finalize();
-
-      await this.telemetry.info("Subsystem dispatch completed", {
+      await this.telemetry.info("Contract dispatch completed", {
         type,
         version,
-        subsystem,
       });
 
       return result;
     } catch (err) {
-      await this.telemetry.error("Subsystem dispatch failed", {
+      await this.telemetry.error("Contract dispatch failed", {
         type,
         version,
         error: err,
@@ -44,31 +45,6 @@ export class NucleusSubsystemRouter {
       throw err;
     } finally {
       this.telemetry.endSpan(span.spanId);
-    }
-  }
-
-  // -----------------------------
-  // Contract Type → Subsystem Mapping
-  // -----------------------------
-  private mapSubsystem(type: string): string {
-    switch (type) {
-      case "opportunity":
-        return "opportunity";
-
-      case "recommendation":
-        return "recommendation";
-
-      case "authorization":
-        return "authorization";
-
-      case "execution":
-        return "execution";
-
-      case "payment":
-        return "payment";
-
-      default:
-        return "core";
     }
   }
 }
