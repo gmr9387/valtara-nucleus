@@ -1,27 +1,55 @@
-// Authoritative Constitutional Subsystem Registry
+// src/nucleus/subsystems/subsystemRegistry.ts
+// Full file — Updated with Contract Subsystem Family
 
-import { registerCapability } from "../capabilityRegistry";
+export const SubsystemRegistry = {
+  // ----------------------------------------
+  // Constitutional Subsystems
+  // ----------------------------------------
+  weaver: {
+    key: "weaver",
+    description: "Weaver subsystem — intelligence orchestration",
+  },
 
-export interface SubsystemDefinition {
-  name: string;
-  capabilities: string[];
-  runtime: any;
-}
+  guardian: {
+    key: "guardian",
+    description: "Guardian subsystem — policy enforcement",
+  },
 
-const registry = new Map<string, SubsystemDefinition>();
+  glue: {
+    key: "glue",
+    description: "Glue subsystem — integration and binding",
+  },
 
-export function registerSubsystem(def: SubsystemDefinition) {
-  registry.set(def.name, def);
+  dualpay: {
+    key: "dualpay",
+    description: "DualPay subsystem — payment orchestration",
+  },
 
-  for (const capability of def.capabilities) {
-    registerCapability(def.name, capability as any);
-  }
-}
+  // ----------------------------------------
+  // Contract Subsystems (NEW)
+  // ----------------------------------------
+  opportunity: {
+    key: "opportunity",
+    description: "Opportunity contract subsystem",
+  },
 
-export function getSubsystem(name: string): SubsystemDefinition | undefined {
-  return registry.get(name);
-}
+  recommendation: {
+    key: "recommendation",
+    description: "Recommendation contract subsystem",
+  },
 
-export function listSubsystems(): SubsystemDefinition[] {
-  return [...registry.values()];
-}
+  authorization: {
+    key: "authorization",
+    description: "Authorization contract subsystem",
+  },
+
+  execution: {
+    key: "execution",
+    description: "Execution contract subsystem",
+  },
+
+  payment: {
+    key: "payment",
+    description: "Payment contract subsystem",
+  },
+};
