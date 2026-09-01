@@ -1,28 +1,5 @@
-/**
- * GlueRuntime (Phase 13 — Guardian → Glue Integration)
- *
- * Purpose:
- *   Glue emits:
- *     - execution
- *
- *   GlueRuntime enforces:
- *     - subsystem identity
- *     - execution lineage (execution → authorization → recommendation → opportunity)
- *     - execution safety (must match authorization intent)
- *     - eventBus emission discipline
- *
- *   NEW (Phase 13):
- *     Glue now *uses* Guardian + Weaver signals:
- *       - authorization.decision ("allow" | "deny")
- *       - recommendation.action ("approve" | "deny" | "review")
- *       - recommendation.confidence (0–1)
- *
- *     Glue produces:
- *       - execution.status ("executed" | "skipped")
- *       - execution.reason
- */
-
 import { eventBus } from "../../events/eventBus";
+import { recordTelemetry } from "../../telemetry/telemetry";
 
 export class GlueRuntime {
   static handle(contractName: string, payload: any) {
@@ -45,33 +22,32 @@ export class GlueRuntime {
     let status = "skipped";
     let reason = "Authorization denied";
 
-    /**
-     * Minimal deterministic logic:
-     *
-     * Execution allowed when:
-     *   - Guardian decision = "allow"
-     *   - AND Weaver recommendation is not "deny"
-     *   - AND confidence >= 0.3 (low threshold)
-     */
-
     if (decision === "allow") {
       if (action !== "deny" && confidence >= 0.3) {
         status = "executed";
-        reason = "Execution allowed by Guardian and supported by Weaver";
+        reason = "Execution allowed";
       } else {
-        status = "skipped";
-        reason = "Weaver recommendation insufficient for execution";
+        reason = "Weaver confidence insufficient";
       }
     }
 
-    const execution = {
+    const result = {
       ...payload,
       status,
       reason,
       timestamp: Date.now(),
     };
 
-    eventBus.emit("glue.execution.processed", execution);
-    return execution;
+    eventBus.emit("glue.execution.processed", result);
+
+    recordTelemetry(
+      "glue",
+      "execution",
+      result.claimId,
+      result.organizationId,
+      result
+    );
+
+    return result;
   }
 }
