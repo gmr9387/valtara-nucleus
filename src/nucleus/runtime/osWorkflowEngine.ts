@@ -1,25 +1,16 @@
 // src/nucleus/runtime/osWorkflowEngine.ts
 
 /**
- * OSWorkflowEngine (Phase 13 — Tightened)
+ * OSWorkflowEngine (Phase 15)
  *
  * Thin wrapper around OSPipeline.
+ * Ensures stable OS-level return shape.
  */
 
-import { OSPipeline, OSPipelineResult } from "./osPipeline";
-
-export type OSWorkflowResult = {
-  status: "completed";
-  claimId: string;
-  organizationId: string;
-  pipeline: OSPipelineResult;
-};
+import { OSPipeline } from "./osPipeline";
 
 export class OSWorkflowEngine {
-  static processClaim(
-    organizationId: string,
-    claimPayload: Record<string, any>
-  ): OSWorkflowResult {
+  static processClaim(organizationId: string, claimPayload: Record<string, any>) {
     const pipeline = OSPipeline.runClaim(organizationId, claimPayload);
 
     return {
