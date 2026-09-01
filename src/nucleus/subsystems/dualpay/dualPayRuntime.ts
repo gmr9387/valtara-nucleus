@@ -1,49 +1,49 @@
-// src/nucleus/subsystems/dualpay/dualPayRuntime.ts
+// src/nucleus/subsystems/glue/glueRuntime.ts
 
 /**
- * DualPayRuntime (Phase 4.4)
+ * GlueRuntime (Phase 12)
  *
  * Purpose:
- *   DualPay emits:
- *     - payment
+ *   Glue emits:
+ *     - execution
  *
- *   DualPayRuntime enforces:
+ *   GlueRuntime enforces:
  *     - subsystem identity
- *     - payment lineage (payment → execution → authorization → recommendation → opportunity)
- *     - payment safety (must match execution intent)
+ *     - execution lineage (execution → authorization → recommendation → opportunity)
+ *     - execution safety (must match authorization intent)
  *     - eventBus emission discipline
  */
 
 import { eventBus } from "../../events/eventBus";
 
-export class DualPayRuntime {
+export class GlueRuntime {
   /**
    * Handle validated contract emissions.
    * Called by RuntimeRouter AFTER constitutional checks.
    */
   static handle(contractName: string, payload: any) {
     switch (contractName) {
-      case "payment":
-        return this.handlePayment(payload);
+      case "execution":
+        return this.handleExecution(payload);
 
       default:
-        throw new Error(`DualPay cannot handle contract: ${contractName}`);
+        throw new Error(`Glue cannot handle contract: ${contractName}`);
     }
   }
 
-  private static handlePayment(payload: any) {
+  private static handleExecution(payload: any) {
     /**
      * Business logic placeholder:
-     * DualPay performs the final payment action.
+     * Glue performs the actual execution of authorized actions.
      *
      * Examples:
-     *   - charging accounts
-     *   - transferring funds
-     *   - recording payment events
-     *   - notifying downstream systems
+     *   - triggering workflows
+     *   - performing API calls
+     *   - executing tasks
+     *   - orchestrating subsystems
      */
 
-    eventBus.emit("dualpay.payment.processed", payload);
+    eventBus.emit("glue.execution.processed", payload);
     return payload;
   }
 }
