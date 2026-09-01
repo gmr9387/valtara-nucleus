@@ -1,16 +1,20 @@
 // src/nucleus/runtime/osEntry.ts
 
 /**
- * OS Entry (Phase 15)
+ * OSEntry (Phase 18 — Hardened)
  *
  * The single, stable entrypoint for claim processing.
- * External systems call ONLY this function.
+ * Now includes defensive validation.
  */
 
 import { OSDecisionRouter } from "./osDecisionRouter";
+import { OSEntryValidation } from "./osEntry.validation";
 
 export class OSEntry {
   static processClaim(organizationId: string, claimPayload: Record<string, any>) {
+    OSEntryValidation.validateOrganizationId(organizationId);
+    OSEntryValidation.validateClaimPayload(claimPayload);
+
     return OSDecisionRouter.routeClaim(organizationId, claimPayload);
   }
 }
