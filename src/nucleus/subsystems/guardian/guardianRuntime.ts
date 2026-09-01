@@ -1,7 +1,7 @@
 // src/nucleus/subsystems/guardian/guardianRuntime.ts
 
 /**
- * GuardianRuntime (Phase 4.2)
+ * GuardianRuntime (Phase 12)
  *
  * Purpose:
  *   Guardian emits:
