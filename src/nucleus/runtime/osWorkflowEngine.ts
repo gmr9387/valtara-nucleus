@@ -1,18 +1,21 @@
 // src/nucleus/runtime/osWorkflowEngine.ts
 
+/**
+ * OSWorkflowEngine (Phase 12)
+ *
+ * Thin wrapper around OSPipeline.
+ */
+
 import { OSPipeline } from "./osPipeline";
 
 export class OSWorkflowEngine {
-  constructor(private organizationId: string) {}
-
-  async processClaim(claimPayload: Record<string, any>) {
-    const pipeline = new OSPipeline(this.organizationId);
-    const result = await pipeline.runClaim(claimPayload);
+  static processClaim(organizationId: string, claimPayload: Record<string, any>) {
+    const result = OSPipeline.runClaim(organizationId, claimPayload);
 
     return {
       status: "completed",
       claimId: result.claimId,
-      organizationId: this.organizationId,
+      organizationId,
       pipeline: result,
     };
   }
