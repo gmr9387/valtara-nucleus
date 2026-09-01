@@ -1,28 +1,9 @@
 // src/nucleus/subsystems/weaver/weaverRuntime.ts
 
-/**
- * WeaverRuntime (Phase 11)
- *
- * Purpose:
- *   Weaver emits:
- *     - opportunity
- *     - recommendation
- *
- *   WeaverRuntime enforces:
- *     - subsystem identity
- *     - contract lineage (recommendation → opportunity)
- *     - eventBus emission discipline
- */
-
 import { eventBus } from "../../events/eventBus";
-import { WeaverIntegrationLayer } from "./weaverIntegrationLayer";
-import { WeaverTelemetry } from "./weaverTelemetry";
+import { recordTelemetry } from "../../telemetry/telemetry";
 
 export class WeaverRuntime {
-  /**
-   * Handle validated contract emissions.
-   * Called by RuntimeRouter AFTER constitutional checks.
-   */
   static handle(contractName: string, payload: any) {
     switch (contractName) {
       case "opportunity":
@@ -37,19 +18,40 @@ export class WeaverRuntime {
   }
 
   private static handleOpportunity(payload: any) {
-    const result = WeaverIntegrationLayer.processOpportunity(payload);
+    const result = {
+      ...payload,
+      score: payload.claimPayload?.amount ? Math.min(payload.claimPayload.amount / 20, 100) : 0,
+    };
 
     eventBus.emit("weaver.opportunity.processed", result);
-    WeaverTelemetry.emit("opportunity", result);
+
+    recordTelemetry(
+      "weaver",
+      "opportunity",
+      result.claimId,
+      result.organizationId,
+      result
+    );
 
     return result;
   }
 
   private static handleRecommendation(payload: any) {
-    const result = WeaverIntegrationLayer.processRecommendation(payload);
+    const result = {
+      ...payload,
+      action: "approve",
+      confidence: 0.7,
+    };
 
     eventBus.emit("weaver.recommendation.processed", result);
-    WeaverTelemetry.emit("recommendation", result);
+
+    recordTelemetry(
+      "weaver",
+      "recommendation",
+      result.claimId,
+      result.organizationId,
+      result
+    );
 
     return result;
   }
