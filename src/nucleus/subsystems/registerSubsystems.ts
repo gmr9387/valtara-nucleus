@@ -1,39 +1,46 @@
-// src/nucleus/registerSubsystems.ts
+// src/nucleus/subsystems/registerSubsystems.ts
 
-import { Application } from "express";
-import { subsystemRegistry } from "./subsystemRegistry";
+import { registerSubsystem } from "./subsystemRegistry";
 
-import { bindDualpayRoutes } from "./subsystems/dualpay/dualpayRouterBinding";
-import { DualpayOpenApi } from "./subsystems/dualpay/dualpayOpenApi";
+import { GuardianRuntime } from "./guardian/guardianRuntime";
+import { GlueRuntime } from "./glue/glueRuntime";
+import { WeaverRuntime } from "./weaver/weaverRuntime";
+import { DualPayRuntime } from "./dualpay/dualpayRuntime";
+import { ContractsRuntime } from "./contracts/contractsRuntime";
 
-export function registerSubsystemRoutes(app: Application) {
-  for (const subsystem of subsystemRegistry) {
-    if (!subsystem.enabled) continue;
+export function registerAllSubsystems() {
+  registerSubsystem({
+    id: "guardian",
+    label: "Guardian Risk Engine",
+    enabled: true,
+    runtime: GuardianRuntime,
+  });
 
-    switch (subsystem.id) {
-      case "dualpay":
-        bindDualpayRoutes(app);
-        break;
+  registerSubsystem({
+    id: "contracts",
+    label: "Contracts Engine",
+    enabled: true,
+    runtime: ContractsRuntime,
+  });
 
-      // existing cases for guardian, glue, weaver, contracts...
-    }
-  }
-}
+  registerSubsystem({
+    id: "glue",
+    label: "Glue Integration Engine",
+    enabled: true,
+    runtime: GlueRuntime,
+  });
 
-export function aggregateSubsystemOpenApi() {
-  const paths: Record<string, any> = {};
+  registerSubsystem({
+    id: "weaver",
+    label: "Weaver Intelligence Engine",
+    enabled: true,
+    runtime: WeaverRuntime,
+  });
 
-  for (const subsystem of subsystemRegistry) {
-    if (!subsystem.enabled) continue;
-
-    switch (subsystem.id) {
-      case "dualpay":
-        Object.assign(paths, DualpayOpenApi.paths);
-        break;
-
-      // existing subsystem OpenAPI merges...
-    }
-  }
-
-  return { paths };
+  registerSubsystem({
+    id: "dualpay",
+    label: "DualPay Payment Intelligence",
+    enabled: true,
+    runtime: DualPayRuntime,
+  });
 }
