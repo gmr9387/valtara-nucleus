@@ -1,7 +1,7 @@
 // src/nucleus/subsystems/glue/glueRuntime.ts
 
 /**
- * GlueRuntime (Phase 4.3)
+ * GlueRuntime (Phase 12)
  *
  * Purpose:
  *   Glue emits:
