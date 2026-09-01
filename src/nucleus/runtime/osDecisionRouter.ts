@@ -1,16 +1,18 @@
 // src/nucleus/runtime/osDecisionRouter.ts
 
 /**
- * OSDecisionRouter (Phase 12)
+ * OSDecisionRouter (Phase 13 — Tightened)
  *
  * Pure router: routes claims into OSWorkflowEngine.
- * Assumes caller handles HTTP / transport concerns.
  */
 
-import { OSWorkflowEngine } from "./osWorkflowEngine";
+import { OSWorkflowEngine, OSWorkflowResult } from "./osWorkflowEngine";
 
 export class OSDecisionRouter {
-  static routeClaim(organizationId: string, claimPayload: Record<string, any>) {
+  static routeClaim(
+    organizationId: string,
+    claimPayload: Record<string, any>
+  ): OSWorkflowResult {
     return OSWorkflowEngine.processClaim(organizationId, claimPayload);
   }
 }
