@@ -1,7 +1,5 @@
-// src/nucleus/subsystems/glue/glueRuntime.ts
-
 /**
- * GlueRuntime (Phase 12)
+ * GlueRuntime (Phase 13 — Guardian → Glue Integration)
  *
  * Purpose:
  *   Glue emits:
@@ -12,15 +10,21 @@
  *     - execution lineage (execution → authorization → recommendation → opportunity)
  *     - execution safety (must match authorization intent)
  *     - eventBus emission discipline
+ *
+ *   NEW (Phase 13):
+ *     Glue now *uses* Guardian + Weaver signals:
+ *       - authorization.decision ("allow" | "deny")
+ *       - recommendation.action ("approve" | "deny" | "review")
+ *       - recommendation.confidence (0–1)
+ *
+ *     Glue produces:
+ *       - execution.status ("executed" | "skipped")
+ *       - execution.reason
  */
 
 import { eventBus } from "../../events/eventBus";
 
 export class GlueRuntime {
-  /**
-   * Handle validated contract emissions.
-   * Called by RuntimeRouter AFTER constitutional checks.
-   */
   static handle(contractName: string, payload: any) {
     switch (contractName) {
       case "execution":
@@ -32,18 +36,42 @@ export class GlueRuntime {
   }
 
   private static handleExecution(payload: any) {
+    const { authorization, recommendation } = payload;
+
+    const decision = authorization?.decision ?? "deny";
+    const action = recommendation?.action ?? "review";
+    const confidence = recommendation?.confidence ?? 0;
+
+    let status = "skipped";
+    let reason = "Authorization denied";
+
     /**
-     * Business logic placeholder:
-     * Glue performs the actual execution of authorized actions.
+     * Minimal deterministic logic:
      *
-     * Examples:
-     *   - triggering workflows
-     *   - performing API calls
-     *   - executing tasks
-     *   - orchestrating subsystems
+     * Execution allowed when:
+     *   - Guardian decision = "allow"
+     *   - AND Weaver recommendation is not "deny"
+     *   - AND confidence >= 0.3 (low threshold)
      */
 
-    eventBus.emit("glue.execution.processed", payload);
-    return payload;
+    if (decision === "allow") {
+      if (action !== "deny" && confidence >= 0.3) {
+        status = "executed";
+        reason = "Execution allowed by Guardian and supported by Weaver";
+      } else {
+        status = "skipped";
+        reason = "Weaver recommendation insufficient for execution";
+      }
+    }
+
+    const execution = {
+      ...payload,
+      status,
+      reason,
+      timestamp: Date.now(),
+    };
+
+    eventBus.emit("glue.execution.processed", execution);
+    return execution;
   }
 }
