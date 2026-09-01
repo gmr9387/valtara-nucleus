@@ -1,50 +1,21 @@
 // src/nucleus/subsystems/nucleusSubsystemRouter.ts
-// Full file — Contract-Aware Subsystem Router
 
-import { ContractRuntimeLoader } from "./contracts/contractRuntimeLoader";
-import { NucleusTelemetryAdapter } from "../telemetry/nucleusTelemetryAdapter";
+import { Router } from "express";
 
-export class NucleusSubsystemRouter {
-  private telemetry: NucleusTelemetryAdapter;
-  private loader: ContractRuntimeLoader;
+import { guardianRouter } from "./guardian/guardianRouter";
+import { contractsRouter } from "./contracts/contractsRouter";
+import { glueRouter } from "./glue/glueRouter";
+import { weaverRouter } from "./weaver/weaverRouter";
+import { dualpayRouter } from "./dualpay/dualpayRouter";
 
-  constructor(private organizationId: string) {
-    this.telemetry = new NucleusTelemetryAdapter(
-      organizationId,
-      "subsystem-router"
-    );
+export function nucleusSubsystemRouter() {
+  const router = Router();
 
-    this.loader = new ContractRuntimeLoader(organizationId);
-  }
+  router.use("/guardian", guardianRouter());
+  router.use("/contracts", contractsRouter());
+  router.use("/glue", glueRouter());
+  router.use("/weaver", weaverRouter());
+  router.use("/dualpay", dualpayRouter());
 
-  // -----------------------------
-  // Main Dispatch Entry Point
-  // -----------------------------
-  async dispatch(type: string, version: string, payload: any) {
-    const span = this.telemetry.startSpan(`dispatch:${type}`);
-
-    try {
-      // Resolve correct contract runtime
-      const runtime = this.loader.resolve(type);
-
-      // Execute contract runtime
-      const result = await runtime.run(version, payload);
-
-      await this.telemetry.info("Contract dispatch completed", {
-        type,
-        version,
-      });
-
-      return result;
-    } catch (err) {
-      await this.telemetry.error("Contract dispatch failed", {
-        type,
-        version,
-        error: err,
-      });
-      throw err;
-    } finally {
-      this.telemetry.endSpan(span.spanId);
-    }
-  }
+  return router;
 }
