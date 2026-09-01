@@ -1,32 +1,12 @@
 // src/nucleus/runtime/osPipeline.ts
 
-/**
- * OSPipeline (Phase 13 — Tightened)
- *
- * Contract-first OS pipeline:
- *   opportunity → recommendation → authorization → execution → payment
- */
-
 import { WeaverRuntime } from "../subsystems/weaver/weaverRuntime";
 import { GuardianRuntime } from "../subsystems/guardian/guardianRuntime";
 import { GlueRuntime } from "../subsystems/glue/glueRuntime";
 import { DualPayRuntime } from "../subsystems/dualpay/dualPayRuntime";
 
-export type OSPipelineResult = {
-  claimId: string;
-  organizationId: string;
-  opportunity: any;
-  recommendation: any;
-  authorization: any;
-  execution: any;
-  payment: any;
-};
-
 export class OSPipeline {
-  static runClaim(
-    organizationId: string,
-    claimPayload: Record<string, any>
-  ): OSPipelineResult {
+  static runClaim(organizationId: string, claimPayload: Record<string, any>) {
     const claimId = claimPayload.claimId || `claim-${Date.now()}`;
 
     const base = { claimId, organizationId, claimPayload };
