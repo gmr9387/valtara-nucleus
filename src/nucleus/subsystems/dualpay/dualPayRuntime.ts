@@ -1,49 +1,80 @@
-// src/nucleus/subsystems/glue/glueRuntime.ts
-
 /**
- * GlueRuntime (Phase 12)
+ * DualPayRuntime (Phase 13 — Glue → DualPay Integration)
  *
  * Purpose:
- *   Glue emits:
- *     - execution
+ *   DualPay emits:
+ *     - payment
  *
- *   GlueRuntime enforces:
+ *   DualPayRuntime enforces:
  *     - subsystem identity
- *     - execution lineage (execution → authorization → recommendation → opportunity)
- *     - execution safety (must match authorization intent)
+ *     - payment lineage (payment → execution → authorization → recommendation → opportunity)
+ *     - payment safety (must match execution intent)
  *     - eventBus emission discipline
+ *
+ *   NEW (Phase 13):
+ *     DualPay now *uses* Glue + Guardian + Weaver signals:
+ *       - execution.status ("executed" | "skipped")
+ *       - authorization.decision ("allow" | "deny")
+ *       - recommendation.confidence (0–1)
+ *
+ *     DualPay produces:
+ *       - payment.status ("paid" | "not_paid")
+ *       - payment.reason
  */
 
 import { eventBus } from "../../events/eventBus";
 
-export class GlueRuntime {
-  /**
-   * Handle validated contract emissions.
-   * Called by RuntimeRouter AFTER constitutional checks.
-   */
+export class DualPayRuntime {
   static handle(contractName: string, payload: any) {
     switch (contractName) {
-      case "execution":
-        return this.handleExecution(payload);
+      case "payment":
+        return this.handlePayment(payload);
 
       default:
-        throw new Error(`Glue cannot handle contract: ${contractName}`);
+        throw new Error(`DualPay cannot handle contract: ${contractName}`);
     }
   }
 
-  private static handleExecution(payload: any) {
+  private static handlePayment(payload: any) {
+    const { execution, authorization, recommendation } = payload;
+
+    const execStatus = execution?.status ?? "skipped";
+    const decision = authorization?.decision ?? "deny";
+    const confidence = recommendation?.confidence ?? 0;
+
+    let status = "not_paid";
+    let reason = "Execution was skipped";
+
     /**
-     * Business logic placeholder:
-     * Glue performs the actual execution of authorized actions.
+     * Minimal deterministic logic:
      *
-     * Examples:
-     *   - triggering workflows
-     *   - performing API calls
-     *   - executing tasks
-     *   - orchestrating subsystems
+     * Payment allowed when:
+     *   - execution.status = "executed"
+     *   - authorization.decision = "allow"
+     *   - recommendation.confidence >= 0.4
      */
 
-    eventBus.emit("glue.execution.processed", payload);
-    return payload;
+    if (execStatus === "executed" && decision === "allow") {
+      if (confidence >= 0.4) {
+        status = "paid";
+        reason = "Payment executed successfully";
+      } else {
+        status = "not_paid";
+        reason = "Weaver confidence too low for payment";
+      }
+    } else if (decision === "deny") {
+      status = "not_paid";
+      reason = "Authorization denied";
+    }
+
+    const payment = {
+      ...payload,
+      status,
+      reason,
+      timestamp: Date.now(),
+    };
+
+    eventBus.emit("dualpay.payment.processed", payment);
+    return payment;
   }
 }
