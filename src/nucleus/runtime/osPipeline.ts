@@ -1,7 +1,7 @@
 // src/nucleus/runtime/osPipeline.ts
 
 /**
- * OSPipeline (Phase 12)
+ * OSPipeline (Phase 13 — Tightened)
  *
  * Contract-first OS pipeline:
  *   opportunity → recommendation → authorization → execution → payment
@@ -12,49 +12,47 @@ import { GuardianRuntime } from "../subsystems/guardian/guardianRuntime";
 import { GlueRuntime } from "../subsystems/glue/glueRuntime";
 import { DualPayRuntime } from "../subsystems/dualpay/dualPayRuntime";
 
+export type OSPipelineResult = {
+  claimId: string;
+  organizationId: string;
+  opportunity: any;
+  recommendation: any;
+  authorization: any;
+  execution: any;
+  payment: any;
+};
+
 export class OSPipeline {
-  static runClaim(organizationId: string, claimPayload: Record<string, any>) {
+  static runClaim(
+    organizationId: string,
+    claimPayload: Record<string, any>
+  ): OSPipelineResult {
     const claimId = claimPayload.claimId || `claim-${Date.now()}`;
 
-    // 1. Weaver → opportunity
-    const opportunity = WeaverRuntime.handle("opportunity", {
-      claimId,
-      organizationId,
-      claimPayload,
-    });
+    const base = { claimId, organizationId, claimPayload };
 
-    // 2. Weaver → recommendation
+    const opportunity = WeaverRuntime.handle("opportunity", base);
+
     const recommendation = WeaverRuntime.handle("recommendation", {
-      claimId,
-      organizationId,
-      claimPayload,
+      ...base,
       opportunity,
     });
 
-    // 3. Guardian → authorization
     const authorization = GuardianRuntime.handle("authorization", {
-      claimId,
-      organizationId,
-      claimPayload,
+      ...base,
       opportunity,
       recommendation,
     });
 
-    // 4. Glue → execution
     const execution = GlueRuntime.handle("execution", {
-      claimId,
-      organizationId,
-      claimPayload,
+      ...base,
       authorization,
       opportunity,
       recommendation,
     });
 
-    // 5. DualPay → payment
     const payment = DualPayRuntime.handle("payment", {
-      claimId,
-      organizationId,
-      claimPayload,
+      ...base,
       execution,
       authorization,
       opportunity,
