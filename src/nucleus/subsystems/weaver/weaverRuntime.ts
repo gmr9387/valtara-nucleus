@@ -1,7 +1,7 @@
 // src/nucleus/subsystems/weaver/weaverRuntime.ts
 
 /**
- * WeaverRuntime (Phase 4.1)
+ * WeaverRuntime (Phase 11)
  *
  * Purpose:
  *   Weaver emits:
@@ -15,6 +15,8 @@
  */
 
 import { eventBus } from "../../events/eventBus";
+import { WeaverIntegrationLayer } from "./weaverIntegrationLayer";
+import { WeaverTelemetry } from "./weaverTelemetry";
 
 export class WeaverRuntime {
   /**
@@ -35,16 +37,20 @@ export class WeaverRuntime {
   }
 
   private static handleOpportunity(payload: any) {
-    // Business logic placeholder
-    // Weaver generates opportunities for Guardian
-    eventBus.emit("weaver.opportunity.processed", payload);
-    return payload;
+    const result = WeaverIntegrationLayer.processOpportunity(payload);
+
+    eventBus.emit("weaver.opportunity.processed", result);
+    WeaverTelemetry.emit("opportunity", result);
+
+    return result;
   }
 
   private static handleRecommendation(payload: any) {
-    // Business logic placeholder
-    // Weaver generates recommendations for Guardian
-    eventBus.emit("weaver.recommendation.processed", payload);
-    return payload;
+    const result = WeaverIntegrationLayer.processRecommendation(payload);
+
+    eventBus.emit("weaver.recommendation.processed", result);
+    WeaverTelemetry.emit("recommendation", result);
+
+    return result;
   }
 }
