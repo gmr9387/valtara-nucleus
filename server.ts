@@ -1,5 +1,4 @@
-// server.ts
-// Full file — Top-level project entrypoint
+// valtaris-nucleus/server.ts
 
 import { startNucleus } from "./src/nucleus";
 
