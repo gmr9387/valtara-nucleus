@@ -1,17 +1,3 @@
-// src/nucleus/index.ts
+import { APIServer } from "./api/apiServer";
 
-import { aggregateSubsystemOpenApi } from "./registerSubsystems";
-
-export const NucleusOpenApi = {
-  openapi: "3.0.0",
-  info: {
-    title: "Nucleus Orchestration API",
-    version: "1.0.0",
-  },
-  paths: {
-    // core Nucleus paths...
-
-    // subsystem paths
-    ...aggregateSubsystemOpenApi().paths,
-  },
-};
+APIServer.start(3000);
