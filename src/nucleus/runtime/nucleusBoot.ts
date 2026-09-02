@@ -1,16 +1,16 @@
 // src/nucleus/runtime/nucleusBoot.ts
 
-import { NucleusRuntime } from "./nucleusRuntime";
 import { nucleusBoot as constitutionBoot } from "../state/nucleusBoot";
 import { registerAllSubsystems } from "../subsystems/registerSubsystems";
+import { NucleusRuntime } from "./nucleusRuntime";
 import { Subsystem } from "./runtimeGuards";
 
 /**
- * Authoritative Nucleus Boot Sequence
- *
- * - Initializes constitutional KNOW layer
- * - Registers subsystems
- * - Creates NucleusRuntime
+ * Unified Nucleus Boot Sequence (Phase 2)
+ * ---------------------------------------
+ * - Constitutional boot (KNOW)
+ * - Subsystem registration
+ * - Runtime creation
  */
 export function nucleusBoot(
   subsystem: Subsystem,
@@ -18,13 +18,13 @@ export function nucleusBoot(
 ): NucleusRuntime {
   console.log("=== [Nucleus] Unified Boot Sequence Starting ===");
 
-  // 1. Constitutional initialization (KNOW)
+  // 1. Constitutional initialization
   constitutionBoot();
 
-  // 2. Subsystem registration
+  // 2. Register all subsystems
   registerAllSubsystems();
 
-  // 3. Runtime initialization (DO)
+  // 3. Create runtime instance
   const runtime = new NucleusRuntime(subsystem, organizationId);
   runtime.boot();
 
