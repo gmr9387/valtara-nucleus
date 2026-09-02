@@ -8,6 +8,9 @@ import { DualPayRuntime } from "../subsystems/dualpay/dualPayRuntime";
 import { TelemetryAdapter } from "../subsystems/telemetry/telemetryAdapter";
 
 export class OSPipeline {
+  /**
+   * Core OS pipeline — called internally or via Gateway.
+   */
   static runClaim(organizationId: string, claimPayload: Record<string, any>) {
     const claimId = claimPayload.claimId || `claim-${Date.now()}`;
 
@@ -60,5 +63,14 @@ export class OSPipeline {
       execution,
       payment,
     };
+  }
+
+  /**
+   * Gateway entrypoint — Phase 23
+   * Accepts normalized payload from GatewayRuntime.
+   */
+  static runClaimFromGateway(gatewayPayload: any) {
+    const { organizationId, claimPayload } = gatewayPayload;
+    return this.runClaim(organizationId, claimPayload);
   }
 }
