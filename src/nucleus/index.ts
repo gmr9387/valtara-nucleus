@@ -1,3 +1,6 @@
-import { APIServer } from "./api/apiServer";
+// src/nucleus/index.ts
 
-APIServer.start(3000);
+import { DeploymentBootstrap } from "./deployment/bootstrap";
+
+// Start Valtaris OS
+DeploymentBootstrap.start();
