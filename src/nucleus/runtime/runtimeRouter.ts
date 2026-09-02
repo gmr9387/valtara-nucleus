@@ -1,25 +1,14 @@
 // src/nucleus/runtime/runtimeRouter.ts
 
 /**
- * Runtime Router (Phase 3.2)
+ * Runtime Router
  *
- * Purpose:
- *   Central dispatcher for all subsystem contract emissions.
- *
- * Responsibilities:
- *     - enforce subsystem permissions
- *     - validate contract payloads
- *     - enforce contract lineage
- *     - enforce resource lineage
- *     - enforce execution + payment safety
- *     - route to subsystem runtimes
+ * Central dispatcher for all subsystem contract emissions.
+ * Uses the authoritative subsystem registry and runtime guards.
  */
 
 import { RuntimeContext, RuntimeGuards } from "./runtimeGuards";
-import { WeaverRuntime } from "../subsystems/weaver/weaverRuntime";
-import { GuardianRuntime } from "../subsystems/guardian/guardianRuntime";
-import { GlueRuntime } from "../subsystems/glue/glueRuntime";
-import { DualPayRuntime } from "../subsystems/dualpay/dualPayRuntime";
+import { getSubsystem } from "../subsystems/subsystemRegistry";
 
 export class RuntimeRouter {
   constructor(private ctx: RuntimeContext) {}
@@ -38,7 +27,7 @@ export class RuntimeRouter {
     RuntimeGuards.enforceContractLineage(contractName, payload);
 
     // 4. Resource lineage enforcement (tenant isolation)
-    RuntimeGuards.enforceResourceLineage(this.ctx, payload.organizationId);
+    RuntimeGuards.enforceResourceLineage(this.ctx, this.ctx.organizationId);
 
     // 5. Execution safety (if applicable)
     if (contractName === "execution") {
@@ -62,22 +51,12 @@ export class RuntimeRouter {
       RuntimeGuards.enforcePaymentSafety(payload, exec.node.payload);
     }
 
-    // 7. Route to subsystem runtime
-    switch (this.ctx.subsystem) {
-      case "weaver":
-        return WeaverRuntime.handle(contractName, payload);
-
-      case "guardian":
-        return GuardianRuntime.handle(contractName, payload);
-
-      case "glue":
-        return GlueRuntime.handle(contractName, payload);
-
-      case "dualpay":
-        return DualPayRuntime.handle(contractName, payload);
-
-      default:
-        throw new Error(`Unknown subsystem: ${this.ctx.subsystem}`);
+    // 7. Route via subsystem registry
+    const subsystem = getSubsystem(this.ctx.subsystem);
+    if (!subsystem || !subsystem.runtime) {
+      throw new Error(`No runtime registered for subsystem: ${this.ctx.subsystem}`);
     }
+
+    return subsystem.runtime.handle(contractName, payload, this.ctx);
   }
 }
