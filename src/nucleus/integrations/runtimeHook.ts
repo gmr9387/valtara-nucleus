@@ -1,18 +1,14 @@
-// src/nucleus/integrations/runtimeHook.ts
+// valtaris-nucleus/src/nucleus/integrations/runtimeHook.ts
+
+import { startNucleus } from "../index";
 
 /**
- * Nucleus Runtime Hook
- *
- * This file allows your application server (Bun, Node, Vite, Wrangler, etc.)
- * to automatically start the Nucleus runtime when the server boots.
- *
- * It simply imports and calls startNucleus().
+ * Integration Runtime Hook
+ * ------------------------
+ * This file previously attempted to start Nucleus through an older
+ * runtime surface. It now delegates to the canonical startup path.
  */
 
-import { startNucleus } from "./runtime";
-
-export function attachNucleusRuntime() {
-  console.log("=== [Nucleus] Attaching Runtime Hook ===");
-  startNucleus();
-  console.log("=== [Nucleus] Runtime Hook Attached ===");
+export function startIntegrationHook() {
+  return startNucleus();
 }
