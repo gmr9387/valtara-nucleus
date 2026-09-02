@@ -1,22 +1,38 @@
-// src/nucleus/subsystemRegistry.ts
+// valtaris-nucleus/src/nucleus/subsystems/subsystemRegistry.ts
 
 export type SubsystemId =
   | "contracts"
   | "guardian"
   | "glue"
   | "weaver"
-  | "dualpay"; // added
+  | "dualpay";
 
 export interface SubsystemDefinition {
   id: SubsystemId;
   label: string;
   enabled: boolean;
+  runtime: any; // unified runtime surface
 }
 
-export const subsystemRegistry: SubsystemDefinition[] = [
-  { id: "contracts", label: "Contracts Engine", enabled: true },
-  { id: "guardian", label: "Guardian Risk Engine", enabled: true },
-  { id: "glue", label: "Glue Integration Engine", enabled: true },
-  { id: "weaver", label: "Weaver Intelligence Engine", enabled: true },
-  { id: "dualpay", label: "DualPay Payment Intelligence", enabled: true }, // NEW
-];
+const registry = new Map<SubsystemId, SubsystemDefinition>();
+
+/**
+ * Register a subsystem into the authoritative Nucleus registry.
+ */
+export function registerSubsystem(def: SubsystemDefinition) {
+  registry.set(def.id, def);
+}
+
+/**
+ * Retrieve a subsystem definition by ID.
+ */
+export function getSubsystem(id: SubsystemId): SubsystemDefinition | undefined {
+  return registry.get(id);
+}
+
+/**
+ * List all registered subsystems.
+ */
+export function listSubsystems(): SubsystemDefinition[] {
+  return [...registry.values()];
+}
