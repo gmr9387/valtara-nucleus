@@ -1,6 +1,11 @@
-// src/nucleus/index.ts
+// valtaris-nucleus/src/nucleus/index.ts
 
 import { DeploymentBootstrap } from "./deployment/bootstrap";
 
-// Start Valtaris OS
-DeploymentBootstrap.start();
+/**
+ * Canonical Nucleus startup entrypoint.
+ * Used by server.ts and CLI/dev commands.
+ */
+export function startNucleus() {
+  DeploymentBootstrap.start();
+}
