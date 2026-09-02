@@ -1,5 +1,5 @@
 import { eventBus } from "../../events/eventBus";
-import { recordTelemetry } from "../../telemetry/telemetry";
+import { DualPayEngine } from "./dualPayEngine";
 
 export class DualPayRuntime {
   static handle(contractName: string, payload: any) {
@@ -13,43 +13,26 @@ export class DualPayRuntime {
   }
 
   private static handlePayment(payload: any) {
-    const { execution, authorization, recommendation } = payload;
-
-    const execStatus = execution?.status ?? "skipped";
-    const decision = authorization?.decision ?? "deny";
-    const confidence = recommendation?.confidence ?? 0;
-
-    let status = "not_paid";
-    let reason = "Execution skipped";
-
-    if (execStatus === "executed" && decision === "allow") {
-      if (confidence >= 0.4) {
-        status = "paid";
-        reason = "Payment executed";
-      } else {
-        reason = "Weaver confidence too low";
-      }
-    } else if (decision === "deny") {
-      reason = "Authorization denied";
-    }
-
-    const result = {
-      ...payload,
-      status,
-      reason,
-      timestamp: Date.now(),
+    const input = {
+      claimId: payload.claimId,
+      organizationId: payload.organizationId,
+      execution: payload.execution,
+      opportunity: payload.opportunity,
+      authorization: payload.authorization,
+      recommendation: payload.recommendation
     };
 
-    eventBus.emit("dualpay.payment.processed", result);
+    const result = DualPayEngine.react(input);
 
-    recordTelemetry(
-      "dualpay",
-      "payment",
-      result.claimId,
-      result.organizationId,
-      result
-    );
+    const final = {
+      ...payload,
+      payment: {
+        ...result,
+        timestamp: Date.now()
+      }
+    };
 
-    return result;
+    eventBus.emit("dualpay.payment.processed", final);
+    return final;
   }
 }
