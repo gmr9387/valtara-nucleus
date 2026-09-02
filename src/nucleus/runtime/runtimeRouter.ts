@@ -1,21 +1,17 @@
 // src/nucleus/runtime/runtimeRouter.ts
 
-/**
- * Runtime Router
- *
- * Central dispatcher for all subsystem contract emissions.
- * Uses the authoritative subsystem registry and runtime guards.
- */
-
 import { RuntimeContext, RuntimeGuards } from "./runtimeGuards";
 import { getSubsystem } from "../subsystems/subsystemRegistry";
 
+/**
+ * Runtime Router
+ * --------------
+ * Central dispatcher for subsystem contract emissions.
+ * Uses the authoritative subsystem registry.
+ */
 export class RuntimeRouter {
   constructor(private ctx: RuntimeContext) {}
 
-  /**
-   * Dispatch a contract to the correct subsystem runtime.
-   */
   dispatch(contractName: string, version: string, payload: any) {
     // 1. Subsystem permission enforcement
     RuntimeGuards.enforceSubsystemPermission(this.ctx, contractName);
@@ -26,10 +22,10 @@ export class RuntimeRouter {
     // 3. Contract lineage enforcement
     RuntimeGuards.enforceContractLineage(contractName, payload);
 
-    // 4. Resource lineage enforcement (tenant isolation)
+    // 4. Resource lineage enforcement
     RuntimeGuards.enforceResourceLineage(this.ctx, this.ctx.organizationId);
 
-    // 5. Execution safety (if applicable)
+    // 5. Execution safety
     if (contractName === "execution") {
       const auth = this.ctx.resources.lookup(
         "authorization",
@@ -40,7 +36,7 @@ export class RuntimeRouter {
       RuntimeGuards.enforceExecutionSafety(payload, auth.node.payload);
     }
 
-    // 6. Payment safety (if applicable)
+    // 6. Payment safety
     if (contractName === "payment") {
       const exec = this.ctx.resources.lookup(
         "execution",
