@@ -1,4 +1,4 @@
-// src/nucleus/subsystems/registerSubsystems.ts
+// valtaris-nucleus/src/nucleus/subsystems/registerSubsystems.ts
 
 import { registerSubsystem } from "./subsystemRegistry";
 
@@ -8,6 +8,10 @@ import { WeaverRuntime } from "./weaver/weaverRuntime";
 import { DualPayRuntime } from "./dualpay/dualpayRuntime";
 import { ContractsRuntime } from "./contracts/contractsRuntime";
 
+/**
+ * Authoritative subsystem registration.
+ * Called during Nucleus boot.
+ */
 export function registerAllSubsystems() {
   registerSubsystem({
     id: "guardian",
