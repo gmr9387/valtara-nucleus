@@ -1,35 +1,29 @@
-// Phase 7.1 — EventSimulationEngine
-// Simulates NucleusEvent emission without touching real state
+// Phase 24 — Event Simulation
 
 import { NucleusEvent } from "../events/nucleusEvent";
-import { NucleusIdentity } from "../identity/nucleusIdentity";
 import { eventBus } from "../events/eventBus";
+import { SimulationContext } from "./simulationContext";
 
-export interface SimulatedEvent {
-  type: string;
-  version: string;
-  payload: unknown;
-  identity: NucleusIdentity;
-  source: string;
-  correlationId?: string;
-  traceId?: string;
-}
-
-export class EventSimulationEngine {
-  static simulate(event: SimulatedEvent): NucleusEvent {
-    const nucleusEvent: NucleusEvent = {
-      type: event.type,
-      version: event.version,
-      payload: event.payload,
-      source: event.source,
-      context: event.identity,
+export class EventSimulation {
+  simulateEvent(
+    type: string,
+    version: string,
+    payload: unknown,
+    ctx: SimulationContext
+  ): NucleusEvent {
+    const event: NucleusEvent = {
+      type,
+      version,
+      payload,
+      source: ctx.identity.subsystem,
+      context: ctx.identity,
       timestamp: new Date().toISOString(),
-      correlationId: event.correlationId,
-      traceId: event.traceId,
       simulated: true,
     };
 
-    eventBus.emit(nucleusEvent);
-    return nucleusEvent;
+    eventBus.emit(event);
+    return event;
   }
 }
+
+export const eventSimulation = new EventSimulation();
