@@ -1,42 +1,65 @@
-// src/nucleus/runtime/nucleusRuntime.ts
+// Phase 27 — Unified Nucleus Runtime
 
-import { RuntimeRouter } from "./runtimeRouter";
-import { RuntimeContext, Subsystem } from "./runtimeGuards";
-import { ResourceService } from "../resources/resourceService";
+import { eventBus } from "../events/eventBus";
+import { stateEngine } from "../state/stateEngine";
+import { weaverRuntime } from "../subsystems/weaverRuntime";
+import { guardianRuntime } from "../subsystems/guardianRuntime";
+import { glueRuntime } from "../subsystems/glueRuntime";
+import { dualpayRuntime } from "../subsystems/dualpayRuntime";
+import { contractSimulation } from "../simulation/contractSimulation";
+import { eventSimulation } from "../simulation/eventSimulation";
+import { resourceGraph } from "../resources/resourceGraph";
+import { lineageEngine } from "../lineage/lineageEngine";
+import { telemetryEngine } from "../telemetry/telemetryEngine";
 
-/**
- * NucleusRuntime
- *
- * Holds runtime context and delegates dispatch to RuntimeRouter.
- */
 export class NucleusRuntime {
-  private ctx: RuntimeContext;
-  private router: RuntimeRouter;
-
-  constructor(subsystem: Subsystem, organizationId: string) {
-    const resources = new ResourceService(organizationId);
-
-    this.ctx = {
-      subsystem,
-      organizationId,
-      resources,
-    };
-
-    this.router = new RuntimeRouter(this.ctx);
+  constructor() {
+    // Wire eventBus → stateEngine
+    eventBus.subscribe((event) => {
+      stateEngine.applyEvent(event);
+    });
   }
 
-  boot() {
-    // Runtime boot hook; can be extended for telemetry, etc.
-    console.log(
-      `[NucleusRuntime] Booted for subsystem=${this.ctx.subsystem}, org=${this.ctx.organizationId}`
-    );
+  // Subsystem accessors
+  get weaver() {
+    return weaverRuntime;
   }
 
-  dispatch(contractName: string, version: string, payload: any) {
-    return this.router.dispatch(contractName, version, payload);
+  get guardian() {
+    return guardianRuntime;
   }
 
-  get context(): RuntimeContext {
-    return this.ctx;
+  get glue() {
+    return glueRuntime;
+  }
+
+  get dualpay() {
+    return dualpayRuntime;
+  }
+
+  // Simulation accessors
+  get simulateEvent() {
+    return eventSimulation;
+  }
+
+  get simulateContract() {
+    return contractSimulation;
+  }
+
+  // Resource graph access
+  get resources() {
+    return resourceGraph;
+  }
+
+  // Lineage access
+  get lineage() {
+    return lineageEngine;
+  }
+
+  // Telemetry access
+  get telemetry() {
+    return telemetryEngine;
   }
 }
+
+export const nucleus = new NucleusRuntime();
