@@ -26,3 +26,10 @@ export const dashboardProviders = {
   lineage: () => lineageEngine.list(),
   telemetry: () => telemetryEngine.list(),
 };
+
+import { deploymentState } from "../deployment/deploymentState";
+
+export const dashboardProviders = {
+  // existing providers...
+  deployment: () => deploymentState,
+};
