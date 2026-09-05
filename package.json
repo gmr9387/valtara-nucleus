@@ -40,3 +40,9 @@
     "ci": "ts-node src/nucleus/ci/runCI.ts"
   }
 }
+
+{
+  "scripts": {
+    "shell": "ts-node src/nucleus/shell/shell.ts"
+  }
+}
