@@ -1,50 +1,57 @@
-// Phase 6.2 — SubsystemContractAdapter
-// Validates subsystem contracts → NucleusEvent → eventBus
+// Phase 19 — SubsystemContractAdapter with identity enforcement
 
-import { validateContract } from "../contracts/contractRegistry";
 import { NucleusEvent } from "../events/nucleusEvent";
-import { NucleusIdentity } from "../identity/nucleusIdentity";
+import { NucleusIdentity, NucleusSubsystem } from "../identity/nucleusIdentity";
 import { eventBus } from "../events/eventBus";
+import { validateContract } from "../contracts/contractRegistry";
 
-export interface SubsystemContract {
+export interface SubsystemContractInput {
+  subsystem: NucleusSubsystem;
   name: string;
   version: string;
   payload: unknown;
-  subsystem: "weaver" | "guardian" | "glue" | "dualpay";
   identity: NucleusIdentity;
+  simulated?: boolean;
   correlationId?: string;
   traceId?: string;
 }
 
 export class SubsystemContractAdapter {
-  static toNucleusEvent(contract: SubsystemContract): NucleusEvent {
-    const validation = validateContract(
-      contract.name,
-      contract.version,
-      contract.payload
-    );
+  static emit(input: SubsystemContractInput): NucleusEvent {
+    const identity: NucleusIdentity = {
+      ...input.identity,
+      subsystem: input.subsystem,
+    };
 
-    if (!validation.valid) {
-      throw new Error(
-        `Invalid subsystem contract: ${contract.name}@${contract.version}`
-      );
+    if (!identity.tenantId) throw new Error("Missing tenantId");
+    if (!identity.environmentId) throw new Error("Missing environmentId");
+    if (!identity.projectId) throw new Error("Missing projectId");
+
+    if (identity.actorId && typeof identity.actorId !== "string") {
+      throw new Error("Invalid actorId");
     }
 
-    return {
-      type: contract.name,
-      version: contract.version,
-      payload: contract.payload,
-      source: contract.subsystem,
-      context: contract.identity,
-      timestamp: new Date().toISOString(),
-      correlationId: contract.correlationId,
-      traceId: contract.traceId,
-    };
-  }
+    if (!identity.subsystem) throw new Error("Missing subsystem");
+    if (!identity.capability) throw new Error("Missing capability");
 
-  static emit(contract: SubsystemContract): NucleusEvent {
-    const nucleusEvent = this.toNucleusEvent(contract);
-    eventBus.emit(nucleusEvent);
-    return nucleusEvent;
+    const validation = validateContract(input.name, input.version, input.payload);
+    if (!validation.valid) {
+      throw new Error(`Invalid subsystem contract: ${input.name}@${input.version}`);
+    }
+
+    const event: NucleusEvent = {
+      type: input.name,
+      version: input.version,
+      payload: input.payload,
+      source: input.subsystem,
+      context: identity,
+      timestamp: new Date().toISOString(),
+      correlationId: input.correlationId,
+      traceId: input.traceId,
+      simulated: input.simulated,
+    };
+
+    eventBus.emit(event);
+    return event;
   }
 }
