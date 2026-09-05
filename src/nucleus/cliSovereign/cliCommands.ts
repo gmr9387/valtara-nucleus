@@ -25,3 +25,10 @@ export const cliCommands = {
   lineage: async () => lineageEngine.list(),
   telemetry: async () => telemetryEngine.list(),
 };
+
+import { deployNucleus } from "../deployment/deployNucleus";
+
+export const cliCommands = {
+  // existing commands...
+  deploy: async () => deployNucleus(),
+};
