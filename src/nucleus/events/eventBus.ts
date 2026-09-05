@@ -1,35 +1,34 @@
-// src/nucleus/events/eventBus.ts
-// Full file — Unified Constitutional Event Bus
+// Phase 19 — EventBus with identity propagation and enforcement
 
-import { NucleusEvent } from "../contracts/NucleusEvent";
+import { NucleusEvent } from "./nucleusEvent";
 
-export type EventHandler = (event: NucleusEvent) => void | Promise<void>;
+type EventHandler = (event: NucleusEvent) => void;
 
-const handlers = new Map<string, EventHandler[]>();
+class EventBus {
+  private handlers: EventHandler[] = [];
 
-/**
- * subscribe(eventType, handler)
- *
- * Subsystems subscribe to specific event types.
- * Use "*" to subscribe to all events.
- */
-export function subscribe(eventType: string, handler: EventHandler) {
-  const list = handlers.get(eventType) ?? [];
-  list.push(handler);
-  handlers.set(eventType, list);
-}
+  subscribe(handler: EventHandler) {
+    this.handlers.push(handler);
+  }
 
-/**
- * publishEvent(event)
- *
- * Emits an event to all matching handlers.
- * First specific handlers, then wildcard handlers.
- */
-export async function publishEvent(event: NucleusEvent) {
-  const specific = handlers.get(event.type) ?? [];
-  const wildcard = handlers.get("*") ?? [];
+  emit(event: NucleusEvent) {
+    const ctx = event.context;
 
-  for (const handler of [...specific, ...wildcard]) {
-    await handler(event);
+    if (!ctx.tenantId) throw new Error("Missing tenantId");
+    if (!ctx.environmentId) throw new Error("Missing environmentId");
+    if (!ctx.projectId) throw new Error("Missing projectId");
+
+    if (ctx.actorId && typeof ctx.actorId !== "string") {
+      throw new Error("Invalid actorId");
+    }
+
+    if (!ctx.subsystem) throw new Error("Missing subsystem");
+    if (!ctx.capability) throw new Error("Missing capability");
+
+    for (const handler of this.handlers) {
+      handler(event);
+    }
   }
 }
+
+export const eventBus = new EventBus();
