@@ -1,71 +1,46 @@
-// Phase 5.1 — ExternalEventAdapter
-// High‑fidelity adapter: external events → NucleusEvent → eventBus
+// Phase 19 — ExternalEventAdapter with identity enforcement
 
 import { NucleusEvent } from "../events/nucleusEvent";
 import { NucleusIdentity } from "../identity/nucleusIdentity";
 import { eventBus } from "../events/eventBus";
 
-export interface ExternalEventMetadata {
-  sourceSystem: string;
+export interface ExternalEventInput {
+  type: string;
+  version: string;
+  payload: unknown;
+  identity: NucleusIdentity;
+  source: string;
   correlationId?: string;
   traceId?: string;
 }
 
-export interface ExternalEventPayload {
-  // Arbitrary external payload; Nucleus does not assume shape here.
-  [key: string]: unknown;
-}
-
-export interface ExternalEvent {
-  type: string;
-  version: string;
-  payload: ExternalEventPayload;
-  tenantId: string;
-  projectId?: string;
-  environmentId?: string;
-  actorId?: string;
-  metadata: ExternalEventMetadata;
-}
-
 export class ExternalEventAdapter {
-  /**
-   * Normalize external identity → NucleusIdentity
-   */
-  static toIdentity(external: ExternalEvent): NucleusIdentity {
-    return {
-      tenantId: external.tenantId,
-      projectId: external.projectId,
-      environmentId: external.environmentId,
-      actorId: external.actorId,
-    };
-  }
+  static emit(input: ExternalEventInput): NucleusEvent {
+    const identity = input.identity;
 
-  /**
-   * Normalize external event → NucleusEvent
-   * This does NOT execute workflows; it only wraps and emits.
-   */
-  static toNucleusEvent(external: ExternalEvent): NucleusEvent {
-    const identity = this.toIdentity(external);
+    if (!identity.tenantId) throw new Error("Missing tenantId");
+    if (!identity.environmentId) throw new Error("Missing environmentId");
+    if (!identity.projectId) throw new Error("Missing projectId");
 
-    return {
-      type: external.type,
-      version: external.version,
-      payload: external.payload,
-      source: external.metadata.sourceSystem,
+    if (identity.actorId && typeof identity.actorId !== "string") {
+      throw new Error("Invalid actorId");
+    }
+
+    if (!identity.subsystem) throw new Error("Missing subsystem");
+    if (!identity.capability) throw new Error("Missing capability");
+
+    const event: NucleusEvent = {
+      type: input.type,
+      version: input.version,
+      payload: input.payload,
+      source: input.source,
       context: identity,
       timestamp: new Date().toISOString(),
-      correlationId: external.metadata.correlationId,
-      traceId: external.metadata.traceId,
+      correlationId: input.correlationId,
+      traceId: input.traceId,
     };
-  }
 
-  /**
-   * Emit external event into the constitutional eventBus.
-   * Returns the NucleusEvent for lineage/observability.
-   */
-  static emit(external: ExternalEvent): NucleusEvent {
-    const nucleusEvent = this.toNucleusEvent(external);
-    eventBus.emit(nucleusEvent);
-    return nucleusEvent;
+    eventBus.emit(event);
+    return event;
   }
 }
