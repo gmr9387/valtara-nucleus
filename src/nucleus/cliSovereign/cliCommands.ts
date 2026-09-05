@@ -32,3 +32,10 @@ export const cliCommands = {
   // existing commands...
   deploy: async () => deployNucleus(),
 };
+
+import { certifyNucleus } from "../certification/certifyNucleus";
+
+export const cliCommands = {
+  // existing commands...
+  certify: async () => certifyNucleus(),
+};
