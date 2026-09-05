@@ -1,42 +1,21 @@
-// Phase 7.3 — SubsystemSimulationHarness
-// Simulates subsystem → NucleusEvent emission
+// Phase 24 — Subsystem Simulation
 
-import { SubsystemEventAdapter } from "../adapter/subsystemEventAdapter";
-import { SubsystemContractAdapter } from "../adapter/subsystemContractAdapter";
-import { NucleusIdentity } from "../identity/nucleusIdentity";
+import { SimulationContext } from "./simulationContext";
+import { eventSimulation } from "./eventSimulation";
+import { contractSimulation } from "./contractSimulation";
 
-export class SubsystemSimulationHarness {
-  static simulateEvent(
-    subsystem: "weaver" | "guardian" | "glue" | "dualpay",
-    type: string,
-    version: string,
-    payload: unknown,
-    identity: NucleusIdentity
-  ) {
-    return SubsystemEventAdapter.emit({
-      subsystem,
-      type,
-      version,
-      payload,
-      identity,
-      simulated: true,
-    } as any);
+export class SubsystemSimulation {
+  constructor(private subsystem: string) {}
+
+  event(type: string, version: string, payload: unknown, ctx: SimulationContext) {
+    return eventSimulation.simulateEvent(type, version, payload, ctx);
   }
 
-  static simulateContract(
-    subsystem: "weaver" | "guardian" | "glue" | "dualpay",
-    name: string,
-    version: string,
-    payload: unknown,
-    identity: NucleusIdentity
-  ) {
-    return SubsystemContractAdapter.emit({
-      subsystem,
-      name,
-      version,
-      payload,
-      identity,
-      simulated: true,
-    } as any);
+  contract(name: string, version: string, payload: unknown, ctx: SimulationContext) {
+    return contractSimulation.simulateContract(name, version, payload, ctx);
   }
+}
+
+export function createSubsystemSimulation(subsystem: string) {
+  return new SubsystemSimulation(subsystem);
 }
