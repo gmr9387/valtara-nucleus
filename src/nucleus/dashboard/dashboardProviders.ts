@@ -33,3 +33,10 @@ export const dashboardProviders = {
   // existing providers...
   deployment: () => deploymentState,
 };
+
+import { certificationState } from "../certification/certificationState";
+
+export const dashboardProviders = {
+  // existing providers...
+  certification: () => certificationState,
+};
