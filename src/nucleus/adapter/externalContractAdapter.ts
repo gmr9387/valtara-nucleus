@@ -1,92 +1,52 @@
-// Phase 5.2 — ExternalContractAdapter
-// High‑fidelity adapter: external contracts → validated NucleusEvent → eventBus
+// Phase 19 — ExternalContractAdapter with identity enforcement
 
 import { NucleusEvent } from "../events/nucleusEvent";
 import { NucleusIdentity } from "../identity/nucleusIdentity";
 import { eventBus } from "../events/eventBus";
-import {
-  validateContract,
-  ContractValidationResult,
-} from "../contracts/contractRegistry";
+import { validateContract } from "../contracts/contractRegistry";
 
-export interface ExternalContractMetadata {
-  sourceSystem: string;
+export interface ExternalContractInput {
+  name: string;
+  version: string;
+  payload: unknown;
+  identity: NucleusIdentity;
+  source: string;
   correlationId?: string;
   traceId?: string;
 }
 
-export interface ExternalContractPayload {
-  // Arbitrary external payload; validated by contractRegistry.
-  [key: string]: unknown;
-}
-
-export interface ExternalContract {
-  name: string; // canonical contract name
-  version: string;
-  payload: ExternalContractPayload;
-  tenantId: string;
-  projectId?: string;
-  environmentId?: string;
-  actorId?: string;
-  metadata: ExternalContractMetadata;
-}
-
 export class ExternalContractAdapter {
-  /**
-   * Normalize external identity → NucleusIdentity
-   */
-  static toIdentity(external: ExternalContract): NucleusIdentity {
-    return {
-      tenantId: external.tenantId,
-      projectId: external.projectId,
-      environmentId: external.environmentId,
-      actorId: external.actorId,
-    };
-  }
+  static emit(input: ExternalContractInput): NucleusEvent {
+    const identity = input.identity;
 
-  /**
-   * Validate external contract against constitutional registry.
-   * Throws on invalid contracts; does NOT attempt to "fix" them.
-   */
-  static validate(external: ExternalContract): ContractValidationResult {
-    return validateContract(external.name, external.version, external.payload);
-  }
+    if (!identity.tenantId) throw new Error("Missing tenantId");
+    if (!identity.environmentId) throw new Error("Missing environmentId");
+    if (!identity.projectId) throw new Error("Missing projectId");
 
-  /**
-   * Normalize external contract → NucleusEvent
-   * Only valid contracts are allowed through.
-   */
-  static toNucleusEvent(external: ExternalContract): NucleusEvent {
-    const validation = this.validate(external);
-
-    if (!validation.valid) {
-      // You can swap this to a structured error envelope if desired.
-      throw new Error(
-        `Invalid external contract: ${external.name}@${external.version} — ${validation.reason ?? "unknown reason"}`
-      );
+    if (identity.actorId && typeof identity.actorId !== "string") {
+      throw new Error("Invalid actorId");
     }
 
-    const identity = this.toIdentity(external);
+    if (!identity.subsystem) throw new Error("Missing subsystem");
+    if (!identity.capability) throw new Error("Missing capability");
 
-    return {
-      type: external.name, // contract name becomes event type
-      version: external.version,
-      payload: external.payload,
-      source: external.metadata.sourceSystem,
+    const validation = validateContract(input.name, input.version, input.payload);
+    if (!validation.valid) {
+      throw new Error(`Invalid contract: ${input.name}@${input.version}`);
+    }
+
+    const event: NucleusEvent = {
+      type: input.name,
+      version: input.version,
+      payload: input.payload,
+      source: input.source,
       context: identity,
       timestamp: new Date().toISOString(),
-      correlationId: external.metadata.correlationId,
-      traceId: external.metadata.traceId,
+      correlationId: input.correlationId,
+      traceId: input.traceId,
     };
-  }
 
-  /**
-   * Emit external contract into the constitutional eventBus.
-   * Returns the NucleusEvent for lineage/observability.
-   */
-  static emit(external: ExternalContract): NucleusEvent {
-    const nucleusEvent = this.toNucleusEvent(external);
-    eventBus.emit(nucleusEvent);
-    return nucleusEvent;
+    eventBus.emit(event);
+    return event;
   }
 }
