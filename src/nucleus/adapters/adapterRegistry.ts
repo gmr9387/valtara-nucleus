@@ -29,3 +29,10 @@ export const adapterRegistry = {
   "autonomy.adapter": autonomyEngine,
   "sovereignty.adapter": sovereigntyRuntime,
 };
+
+import { legacyAdapterRegistry } from "../adaptersLegacy/legacyAdapterRegistry";
+
+export const adapterRegistry = {
+  ...legacyAdapterRegistry,
+  // existing constitutional adapters remain unchanged
+};
