@@ -46,3 +46,9 @@
     "shell": "ts-node src/nucleus/shell/shell.ts"
   }
 }
+
+{
+  "scripts": {
+    "dashboard": "ts-node src/nucleus/dashboard/startDashboard.ts"
+  }
+}
