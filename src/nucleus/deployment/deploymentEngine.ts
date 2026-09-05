@@ -1,25 +1,29 @@
-// Phase 35 — Deployment Engine
+// Phase 49 — Deployment Engine
 
 import { deploymentManifest } from "./deploymentManifest";
-import { subsystemDeploymentMap } from "./subsystemDeploymentMap";
-import { environmentDeploymentMap } from "./environmentDeploymentMap";
-import { resourcePartitionMap } from "./resourcePartitionMap";
+import { deploymentProviders } from "./deploymentProviders";
+import { deploymentState } from "./deploymentState";
 
 export class DeploymentEngine {
-  getManifest() {
-    return deploymentManifest;
-  }
+  async deploy() {
+    if (!deploymentManifest.enabled) {
+      throw new Error("Deployment disabled by manifest");
+    }
 
-  getSubsystemDeployment(subsystem: string) {
-    return subsystemDeploymentMap.find((s) => s.subsystem === subsystem);
-  }
+    const services = [];
 
-  getEnvironmentDeployment(environment: string) {
-    return environmentDeploymentMap.find((e) => e.environment === environment);
-  }
+    for (const key of Object.keys(deploymentProviders)) {
+      if ((deploymentManifest as any)[key]) {
+        const result = await (deploymentProviders as any)[key]();
+        services.push(result);
+      }
+    }
 
-  getResourcePartition(resourceType: string) {
-    return resourcePartitionMap.find((r) => r.resourceType === resourceType);
+    deploymentState.deployed = true;
+    deploymentState.lastDeployedAt = new Date().toISOString();
+    deploymentState.services = services;
+
+    return deploymentState;
   }
 }
 
