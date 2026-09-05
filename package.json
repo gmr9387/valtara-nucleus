@@ -34,3 +34,8 @@
     "prettier": "^3.3.3"
   }
 }
+{
+  "scripts": {
+    "ci": "ts-node src/nucleus/ci/runCI.ts"
+  }
+}
